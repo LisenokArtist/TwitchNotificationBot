@@ -1,12 +1,15 @@
-//const { SlashCommandBuilder } = require('../../../node_modules/@discordjs/builders/dist/index');
-const { SlashCommandBuilder } = require('discord.js');
-module.exports = {
-	data: new SlashCommandBuilder()
-		.setName('ping')
-		.setDescription('Replies with Pong!'),
+const { SlashCommandBuilder } = require('../../../../node_modules/@discordjs/builders/dist/index');
+const InteractionCommand = require('../../../../Core/InteractionCommand');
 
-	/**  @param {CommandInteraction} interaction */
-	async execute(interaction) {
-		await interaction.reply('Pong!');
-	},
-};
+const PingCommand = new InteractionCommand(
+    new SlashCommandBuilder()
+        .setName('ping')
+        .setDescription('Replies with Pong!'),
+    /** @param {any} interaction */
+    async function(interaction) {
+        await interaction.reply('Pong!');
+    },
+    null
+)
+
+module.exports = { PingCommand };

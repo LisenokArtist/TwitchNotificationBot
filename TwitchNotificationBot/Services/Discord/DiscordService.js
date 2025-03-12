@@ -1,5 +1,5 @@
 const ServiceBase = require('../ServiceBase');
-const { IntentsBitField } = require('../../node_modules/discord.js/src/index');
+const { IntentsBitField, Partials } = require('../../node_modules/discord.js/src/index');
 const Client = require('../../node_modules/discord.js/src/client/Client');
 const { GatewayIntentBits } = require('../../node_modules/discord-api-types/v10');
 const { Collection } = require('../../node_modules/@discordjs/collection/dist/index');
@@ -9,12 +9,10 @@ const CommandInteraction = require('../../node_modules/discord.js/src/structures
 const { REST } = require('../../node_modules/@discordjs/rest/dist/index');
 const { Routes } = require('discord.js');
 const { DiscordConfig } = require('../../Core/AppConfig');
+const { InteractionCommand } = require('../../Core/InteractionCommand');
 
 class DiscordService extends ServiceBase {
-    /**
-     * 
-     * @param {DiscordConfig} config
-     */
+    /** @param {DiscordConfig} config */
     constructor(config) {
         super(config.token);
         /** @type {DiscordConfig} */
@@ -25,6 +23,7 @@ class DiscordService extends ServiceBase {
 
         this.client = new Client({
             intents: bits,
+            partials: [Partials.Message, Partials.Channel, Partials.Reaction],
         });
         
 
@@ -48,8 +47,10 @@ class DiscordService extends ServiceBase {
             const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
             for (const file of commandFiles) {
                 const filePath = path.join(commandsPath, file);
-                const command = require(filePath);
-                if ('data' in command && 'execute' in command) {
+                const filejs = require(filePath);
+                /** @type {InteractionCommand | null} */
+                const command = this.#getInteractionCommand(filejs);
+                if (command != null && command.validate() === true) {
                     commands.set(command.data.name, command);
                 } else {
                     console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
@@ -60,6 +61,16 @@ class DiscordService extends ServiceBase {
         return commands;
     }
 
+    #getInteractionCommand(obj) {
+        const properties = Object.values(obj)
+        for (const property of properties) {
+            if (property.constructor.name === 'InteractionCommand') {
+                return property;
+            }
+        }
+        return null;
+    }
+
     /** @param {Collection} commands */
     async #registerCommands(commands) {
         /** @type {REST} */
@@ -68,8 +79,23 @@ class DiscordService extends ServiceBase {
             console.log(`Started refreshing ${commands.size} application (/) commands.`);
             const data = await rest.put(
                 Routes.applicationGuildCommands(this.config.cliendId, this.config.guildId),
-                { body: commands.map((v) => { return v.data.toJSON() })},
+                {
+                    body: commands.map((c) => {
+                        /** @type {InteractionCommand} */
+                        var command = c;
+                        return command.data.toJSON()
+                })},
             );
+
+            console.log(`Registering on interaction command events (if exists).`);
+            commands.forEach(async o => {
+                /** @type {InteractionCommand} */
+                const command = o;
+                if (command.onAdded != null) {
+                    await command.onAdded(this);
+                }
+            });
+
             console.log(`Successfully reloaded ${data.length} application (/) commands.`);
         } catch (error) {
             console.error(error);
@@ -126,4 +152,4 @@ class DiscordService extends ServiceBase {
     }
 }
 
-module.exports = DiscordService;
+module.exports = { DiscordService };

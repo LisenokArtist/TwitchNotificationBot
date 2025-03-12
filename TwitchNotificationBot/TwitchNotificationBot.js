@@ -1,6 +1,6 @@
-const DiscordService = require('./Services/Discord/DiscordService');
+const { DiscordService } = require('./Services/Discord/DiscordService');
 const { AppConfig, DiscordConfig } = require('./Core/AppConfig');
-const ServiceBase = require('./Services/ServiceBase');
+const { ServiceBase } = require('./Services/ServiceBase');
 
 class TwitchNotificationBot {
     /**
