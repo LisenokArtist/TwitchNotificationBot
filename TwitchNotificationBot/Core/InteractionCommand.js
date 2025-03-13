@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('../node_modules/@discordjs/builders/dist/index');
 //const { Events } = require('../node_modules/discord.js/typings/index');
 const { DiscordService } = require('../Services/Discord/DiscordService');
-class InteractionCommand {
+const InteractionCommand = class InteractionCommand {
     /**
      * Создает компонент команды
      * @param {SlashCommandBuilder} commandBuilder Конструктор построения команды
@@ -22,7 +22,6 @@ class InteractionCommand {
         throw new Error("Not implement function exception");
     }
 
-
     validate() {
         if (this.data != null && this.execute != null) {
             return true;
@@ -31,4 +30,4 @@ class InteractionCommand {
     }
 }
 
-module.exports = InteractionCommand;
+module.exports = { InteractionCommand };
