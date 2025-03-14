@@ -18,19 +18,47 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
      */
     addMessage(guildId, messageId, reaction, roleId) {
         const item = new ReactForRoleMessageModel(guildId, messageId, reaction, roleId);
-        this.messagesToInteract.push(item);
+        const isExist = this.messagesToInteract.find(x => {
+            return x.guildId === item.guildId
+                && x.messageId === item.messageId
+                && x.reaction === item.reaction
+                && x.roleId === item.roleId
+        }) != undefined;
+        if (!isExist) {
+            this.messagesToInteract.push(item);
+            return true;
+        }
+        return false;
     }
 
     /**
      * Удаляет отслеживаемое сообщение по его идентификатору
-     * @param {any} messageId Идентификатор сообщения
+     * @param {String} messageId Идентификатор сообщения
      * @returns
      */
     removeMessageById(messageId) {
         var result = null;
-
         const index = this.messagesToInteract.findIndex(x => {
             return x.messageId === messageId
+        });
+
+        if (index > -1) {
+            result = this.messagesToInteract[index];
+            this.messagesToInteract.slice(index, 1);
+        }
+
+        return result;
+    }
+
+    /**
+     * Удаляет отслеживаемое сообщение по его реакции
+     * @param {String} reaction Название реакции вида :reaction:
+     * @returns
+     */
+    removeMessageByReaction(reaction) {
+        var result = null;
+        const index = this.messagesToInteract.findIndex(x => {
+            return x.reaction === reaction;
         });
 
         if (index > -1) {
