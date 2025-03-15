@@ -16,9 +16,10 @@ const GiveRoleOnReactionCommand = new InteractionCommand(
         .addStringOption(o => o.setName('message-id').setDescription('Message id').setRequired(true))
         .addStringOption(o => o.setName('reaction').setDescription(':reaction:').setRequired(true))
         .addRoleOption(r => r.setName('role').setDescription('@Role').setRequired(true)),
+
     /** @param {CommandInteraction} interaction */
     async function (interaction) {
-        const flags = null;
+        const flags = MessageFlags.Ephemeral;
         await interaction.deferReply({
             flags: flags
         });
@@ -50,9 +51,11 @@ const GiveRoleOnReactionCommand = new InteractionCommand(
                         const textChannelMessage = await textChannel.messages.fetch(messageId);
                         /** @type {MessageReaction} */
                         const reactResult = await textChannelMessage.react(reaction);
+                        break;
                     }
                     default: {
                         throw new Error('Not implement exception');
+                        break;
                     }
                 }
                 
