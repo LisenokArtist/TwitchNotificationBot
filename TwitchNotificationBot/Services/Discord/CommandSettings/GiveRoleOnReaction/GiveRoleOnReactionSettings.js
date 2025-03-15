@@ -10,7 +10,7 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
     }
 
     /**
-     * Добавляет сообщение в список
+     * Добавляет сообщение в список если такой записи не существует
      * @param {String} guildId Идентификатор сервера
      * @param {String} messageId Идентификатор сообщения
      * @param {String} reaction Реакция вида ":reaction:"
@@ -34,7 +34,7 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
     /**
      * Удаляет отслеживаемое сообщение по его идентификатору
      * @param {String} messageId Идентификатор сообщения
-     * @returns
+     * @returns {?ReactForRoleMessageModel} Удаленная запись или ничего
      */
     removeMessageById(messageId) {
         var result = null;
@@ -53,7 +53,7 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
     /**
      * Удаляет отслеживаемое сообщение по его реакции
      * @param {String} reaction Название реакции вида :reaction:
-     * @returns
+     * @returns {?ReactForRoleMessageModel} Удаленная запись или ничего
      */
     removeMessageByReaction(reaction) {
         var result = null;
@@ -69,28 +69,39 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
         return result;
     }
 
+    /**
+     * Загружает настройки из файла
+     * @returns {Boolean} True если файл был загружен
+     */
     loadSettings() {
-        const file = fs.readFileSync(filePath, 'utf8');
-        try {
+        const isExist = fs.existsSync(filePath);
+        if (isExist) {
+            const file = fs.readFileSync(filePath, 'utf8');
             const result = JSON.parse(file);
             Object.assign(this, result);
-        } catch (e) {
-            console.log(e);
-            //throw new Error("Not implement load settings exception");
+            return true;
         }
+        else {
+            console.log('File ' + filePath + ' not found');
+        }
+
+        return false;
     }
 
+    /**
+     * Сохраняет настройки в файл
+     * @returns {Boolean} True если файл был успешно сохранен
+     */
     saveSettings() {
         const json = JSON.stringify(this);
         try {
             fs.writeFileSync(filePath, json);
+            return true;
         } catch (e) {
             console.log(e);
-            //throw new Error("Not implement save settings exception");
         }
-        
+        return false;
     }
-    
 }
 
 module.exports = { GiveRoleOnReactionSettings }

@@ -4,7 +4,10 @@ const CommandInteraction = require('../../../../node_modules/discord.js/src/stru
 const { MessageFlags } = require('../../../../node_modules/discord-api-types/v10');
 const CommandInteractionOptionResolver = require('../../../../node_modules/discord.js/src/structures/CommandInteractionOptionResolver');
 const { Role } = require('../../../../node_modules/discord.js/src/structures/Role');
-const { GiveRoleOnReactionSettings } = require('../../CommandSettings/GiveRoleOnReaction/give-role-on-reaction-settings');
+const { GiveRoleOnReactionSettings } = require('../../CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
+const TextChannel = require('../../../../node_modules/discord.js/src/structures/TextChannel');
+const { Message } = require('../../../../node_modules/discord.js/src/structures/Message');
+const MessageReaction = require('../../../../node_modules/discord.js/src/structures/MessageReaction');
 
 const GiveRoleOnReactionCommand = new InteractionCommand(
     new SlashCommandBuilder()
@@ -13,8 +16,13 @@ const GiveRoleOnReactionCommand = new InteractionCommand(
         .addStringOption(o => o.setName('message-id').setDescription('Message id').setRequired(true))
         .addStringOption(o => o.setName('reaction').setDescription(':reaction:').setRequired(true))
         .addRoleOption(r => r.setName('role').setDescription('@Role').setRequired(true)),
-    /**  @param {CommandInteraction} interaction */
+    /** @param {CommandInteraction} interaction */
     async function (interaction) {
+        const flags = null;
+        await interaction.deferReply({
+            flags: flags
+        });
+
         var result = "Undefined exception";
         const settings = new GiveRoleOnReactionSettings();
         /** @type {CommandInteractionOptionResolver}*/
@@ -33,10 +41,24 @@ const GiveRoleOnReactionCommand = new InteractionCommand(
             const isAdded = settings.addMessage(guildId, messageId, reaction, role.id);
 
             if (isAdded === true) {
+                const constr = interaction.channel.constructor;
+                switch (constr) {
+                    case TextChannel: {
+                        /** @type {TextChannel} */
+                        const textChannel = interaction.channel;
+                        /** @type {Message} */
+                        const textChannelMessage = await textChannel.messages.fetch(messageId);
+                        /** @type {MessageReaction} */
+                        const reactResult = await textChannelMessage.react(reaction);
+                    }
+                    default: {
+                        throw new Error('Not implement exception');
+                    }
+                }
+                
                 settings.saveSettings();
                 result = "Changes saved";
-            }
-            else {
+            } else {
                 result = "Current settings already exists";
             }
         } catch (e) {
@@ -44,11 +66,12 @@ const GiveRoleOnReactionCommand = new InteractionCommand(
             console.log(e);
         }
 
-        await interaction.reply({
+        await interaction.editReply({
             content: result,
-            flags: MessageFlags.Ephemeral
+            flags: flags
         });
     },
+
     null
 )
 

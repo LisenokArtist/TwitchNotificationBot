@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.2191419">
   <ItemGroup>
-    <Folder Include="Services\Discord\Commands\RemoveRoleableMessageById\" />
     <Folder Include="Services\Discord\Commands\RemoveRoleableMessageByReaction\" />
     <Folder Include="Services\Telegram\" />
     <Folder Include="Services\Twitch\" />
