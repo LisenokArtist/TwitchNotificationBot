@@ -8,18 +8,19 @@ const MessageReaction = require('../../../../node_modules/discord.js/src/structu
 const { Message } = require('../../../../node_modules/discord.js/src/structures/Message');
 const TextChannel = require('../../../../node_modules/discord.js/src/structures/TextChannel');
 
-const RemoveRoleableMessageById = new InteractionCommand(
+const RemoveRoleableMessageReaction = new InteractionCommand(
     new SlashCommandBuilder()
-        .setName('remove-roleable-message-by-id')
-        .setDescription('Remove message (from DB) wich gives role')
-        .addStringOption(o => o.setName('message-id').setDescription('Message id').setRequired(true)),
+        .setName('remove-roleable-message-reaction')
+        .setDescription('Remove reaction from message wich gives role')
+        .addStringOption(o => o.setName('message-id').setDescription('Message id').setRequired(true))
+        .addStringOption(o => o.setName('reaction').setDescription(':reaction:').setRequired(true)),
 
     /**
      * @param {CommandInteraction} interaction
      * @param {Client} client
      */
     async function (interaction, client) {
-        const flags = MessageFlags.Ephemeral
+        const flags = MessageFlags.Ephemeral;
         await interaction.deferReply({
             flags: flags
         });
@@ -32,9 +33,11 @@ const RemoveRoleableMessageById = new InteractionCommand(
         try {
             /** @type {String} */
             const messageId = options.getString('message-id', true);
+            /** @type {String} */
+            const reaction = options.getString('reaction', true);
 
             settings.loadSettings();
-            const removedMessage = settings.removeMessage(interaction.guildId, messageId);
+            const removedMessage = settings.removeMessage(interaction.guildId, messageId, reaction);
             if (removedMessage.length > 0) {
                 switch (interaction.channel.constructor) {
                     case TextChannel: {
@@ -42,7 +45,11 @@ const RemoveRoleableMessageById = new InteractionCommand(
                         const textChannel = interaction.channel;
                         /** @type {Message} */
                         const textChannelMessage = await textChannel.messages.fetch(messageId);
-                        await textChannelMessage.reactions.removeAll();
+                        removedMessage.forEach(async m => {
+                            /** @type {MessageReaction} */
+                            const messageReaction = await textChannelMessage.reactions.resolve(m.reaction);
+                            messageReaction.remove();
+                        });
                         break;
                     }
                     default: {
@@ -70,4 +77,4 @@ const RemoveRoleableMessageById = new InteractionCommand(
     null
 )
 
-module.exports = { RemoveRoleableMessageById }
+module.exports = { RemoveRoleableMessageReaction }

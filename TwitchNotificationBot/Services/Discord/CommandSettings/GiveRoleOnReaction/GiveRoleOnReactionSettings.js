@@ -32,32 +32,49 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
     }
 
     /**
-     * Удаляет отслеживаемое сообщение по его идентификатору
-     * @param {String} messageId Идентификатор сообщения
-     * @returns {?ReactForRoleMessageModel} Удаленная запись или ничего
+     * Удаляет реакцию у сообщения или все настройки этого сообщения
+     * @param {String} guildId ID сервера
+     * @param {String} messageId ID сообщения
+     * @param {String} reaction Название реакции вида :reaction:
+     * @returns {ReactForRoleMessageModel[]} Удаленные записи
      */
-    removeMessageById(messageId) {
-        var result = null;
-        const items = this.messagesToInteract.filter()
+    removeMessage(guildId, messageId, reaction = undefined) {
+        if (guildId) {
+            if (messageId) {
+                if (reaction) {
+                    return this.#removeMessageByIdAndReaction(guildId, messageId, reaction);
+                }
+                return this.#removeMessageById(guildId, messageId);
+            }
+        }
+    }
+
+    #removeMessageById(guildId, messageId) {
+        var result = new Array();
+        this.messagesToInteract = this.messagesToInteract.filter((e) => {
+            if (e.guildId === guildId &&
+                e.messageId === messageId) {
+                result.push(e);
+                return false;
+            }
+            return true;
+        });
+        console.log(result.length);
         return result;
     }
 
-    /**
-     * Удаляет отслеживаемое сообщение по его реакции
-     * @param {String} reaction Название реакции вида :reaction:
-     * @returns {?ReactForRoleMessageModel} Удаленная запись или ничего
-     */
-    removeMessageByReaction(reaction) {
-        var result = null;
-        const index = this.messagesToInteract.findIndex(x => {
-            return x.reaction === reaction;
-        });
-
-        if (index > -1) {
-            result = this.messagesToInteract[index];
-            this.messagesToInteract.slice(index, 1);
-        }
-
+    #removeMessageByIdAndReaction(guildId, messageId, reaction) {
+        var result = new Array();
+        this.messagesToInteract = this.messagesToInteract.filter((e) => {
+            if (e.guildId === guildId &&
+                e.messageId == messageId &&
+                e.reaction == reaction) {
+                result.push(e);
+                return false;
+            }
+            return true;
+        })
+        console.log(result.length);
         return result;
     }
 
