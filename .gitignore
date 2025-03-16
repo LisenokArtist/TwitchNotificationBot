@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /TwitchNotificationBot/Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings.json
+/TwitchNotificationBot/Core/AppConfig.json
