@@ -1,5 +1,6 @@
 ﻿const assert = require('assert');
 const { GiveRoleOnReactionSettings } = require('../Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
+const { AppConfig, DiscordConfig } = require('../Core/AppConfig');
 
 describe('Array', function () {
     describe('#indexOf()', function () {
@@ -9,6 +10,21 @@ describe('Array', function () {
         });
     });
 });
+
+describe('AppConfig', function () {
+    it('Generate empty app file config', function () {
+        const config = new AppConfig(
+            new DiscordConfig('token', 'clientId', 'guildId')
+        );
+        const result = config.save();
+        return result;
+    });
+    it('Load app file config', function () {
+        const config = new AppConfig();
+        const result = config.load();
+        return result;
+    })
+})
 
 describe('GiveRoleOnReactionSettings', function () {
     it('Remove by guildId, messageId and return items as result', function () {

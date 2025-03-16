@@ -1,3 +1,7 @@
+const path = require('node:path');
+const fs = require('node:fs');
+const filePath = path.join(__dirname, 'AppConfig.json');
+
 class AppConfig {
     /**
      * Создает класс с найстройками всего решения
@@ -6,6 +10,39 @@ class AppConfig {
     constructor(discordConfig) {
         /** @type {DiscordConfig} */
         this.discordConfig = discordConfig;
+    }
+
+    /**
+     * Сохраняет файл конфигурации
+     * @returns true если сохранение было успешно
+     */
+    save() {
+        const json = JSON.stringify(this);
+        try {
+            fs.writeFileSync(filePath, json);
+            return true;
+        } catch (e) {
+            console.log('Unable to read app config file with error: ' + e);
+        }
+        return false;
+    }
+
+    /**
+     * Загружает файл конфигурации
+     * @returns true если загрузка была успешна
+     */
+    load() {
+        const isExists = fs.existsSync(filePath);
+        if (isExists) {
+            const file = fs.readFileSync(filePath, 'utf8');
+            const result = JSON.parse(file);
+            Object.assign(this, result);
+            return true;
+        }
+        else {
+            console.log('File ' + filePath + ' not found');
+        }
+        return false;
     }
 }
 //
