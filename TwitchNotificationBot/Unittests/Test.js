@@ -1,15 +1,5 @@
-﻿const assert = require('assert');
-const { GiveRoleOnReactionSettings } = require('../Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
+﻿const { GiveRoleOnReactionSettings } = require('../Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
 const { AppConfig, DiscordConfig } = require('../Core/AppConfig');
-
-describe('Array', function () {
-    describe('#indexOf()', function () {
-        it('should return -1 when the value is not present', function () {
-            const arr = new Array();
-            assert.equal([1, 2, 3].indexOf(4), -1);
-        });
-    });
-});
 
 describe('AppConfig', function () {
     it('Generate empty app file config', function () {
