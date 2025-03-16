@@ -110,15 +110,16 @@ class DiscordService extends ServiceBase {
         this.client.on('interactionCreate', i => this.#onInteractionCreate(i))
     }
 
-    /** @param {CommandInteraction} i */
-    async #onInteractionCreate(i) {
-        if (!i.isChatInputCommand()) return;
+    /** @param {CommandInteraction} interaction */
+    async #onInteractionCreate(interaction) {
+        if (!interaction.isChatInputCommand()) return;
 
-        const command = this.commands.get(i.commandName);
+        /** @type {InteractionCommand} */
+        const command = this.commands.get(interaction.commandName);
         if (!command) { console.log(`No command matching ${interaction.commandName} was found.`); return; }
 
         try {
-            await command.execute(i);
+            await command.execute(interaction, this.client);
         } catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {

@@ -17,8 +17,11 @@ const GiveRoleOnReactionCommand = new InteractionCommand(
         .addStringOption(o => o.setName('reaction').setDescription(':reaction:').setRequired(true))
         .addRoleOption(r => r.setName('role').setDescription('@Role').setRequired(true)),
 
-    /** @param {CommandInteraction} interaction */
-    async function (interaction) {
+    /**
+     * @param {CommandInteraction} interaction
+     * @param {BaseClient} client
+     */
+    async function (interaction, client) {
         const flags = MessageFlags.Ephemeral;
         await interaction.deferReply({
             flags: flags

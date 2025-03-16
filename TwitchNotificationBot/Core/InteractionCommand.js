@@ -1,6 +1,5 @@
 const { SlashCommandBuilder } = require('../node_modules/@discordjs/builders/dist/index');
-//const { Events } = require('../node_modules/discord.js/typings/index');
-const { DiscordService } = require('../Services/Discord/DiscordService');
+const BaseClient = require('../node_modules/discord.js/src/client/BaseClient');
 const InteractionCommand = class InteractionCommand {
     /**
      * Создает компонент команды
@@ -17,8 +16,12 @@ const InteractionCommand = class InteractionCommand {
         this.onAdded = onCommandAdded ?? null;
     }
 
-    /** @param {CommandInteraction} interaction */
-    async execute(interaction) {
+    /**
+     * 
+     * @param {CommandInteraction} interaction
+     * @param {BaseClient} client
+     */
+    async execute(interaction, client = null) {
         throw new Error("Not implement function exception");
     }
 

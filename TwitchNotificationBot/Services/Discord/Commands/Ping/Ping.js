@@ -6,8 +6,12 @@ const PingCommand = new InteractionCommand(
     new SlashCommandBuilder()
         .setName('ping')
         .setDescription('Replies with Pong!'),
-    /** @param {CommandInteraction} interaction */
-    async function(interaction) {
+    /**
+     * 
+     * @param {CommandInteraction} interaction
+     * @param {BaseClient} client
+     */
+    async function (interaction, client) {
         await interaction.reply('Pong!');
     },
     null

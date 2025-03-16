@@ -38,15 +38,7 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
      */
     removeMessageById(messageId) {
         var result = null;
-        const index = this.messagesToInteract.findIndex(x => {
-            return x.messageId === messageId
-        });
-
-        if (index > -1) {
-            result = this.messagesToInteract[index];
-            this.messagesToInteract.slice(index, 1);
-        }
-
+        const items = this.messagesToInteract.filter()
         return result;
     }
 
