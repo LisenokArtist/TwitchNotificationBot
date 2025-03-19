@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /TwitchNotificationBot/Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings.json
 /TwitchNotificationBot/Core/AppConfig.json
+/TwitchNotificationBot/Services/Twitch/AuthToken.json
