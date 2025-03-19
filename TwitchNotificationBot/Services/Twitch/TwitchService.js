@@ -4,7 +4,7 @@ const filePath = path.join(__dirname, 'AuthToken.json');
 const { TwitchConfig } = require('../../Core/AppConfig');
 const { ServiceBase } = require('../ServiceBase');
 const { AuthToken } = require('../../Core/Twitch/TwitchModels');
-const { TokenResponse } = require('../../Core/Twitch/TwitchApiModels');
+const { TokenResponse, StreamsResponse } = require('../../Core/Twitch/TwitchApiModels');
 const { StreamMonitorManager } = require('./StreamMonitorManager');
 const ingestUrl = "https://ingest.twitch.tv";
 const helixUrl = "https://api.twitch.tv/helix";
@@ -25,7 +25,6 @@ const TwitchService = class TwitchService extends ServiceBase {
         this.authToken;
 
         this.streamMonitorManager = new StreamMonitorManager(this, 60);
-
     }
 
     /**
@@ -204,7 +203,8 @@ const TwitchService = class TwitchService extends ServiceBase {
 
     /**
      * 
-     * @param {String[]} userLogins
+     * @param { String[] } userLogins
+     * @returns { StreamsResponse }
      */
     async getStreams(userLogins) {
         const endPoint = '/streams';
@@ -214,7 +214,7 @@ const TwitchService = class TwitchService extends ServiceBase {
         }
 
         const query = `?${userLogins.map(x => `user_login=${x}`).join('&') }`;
-        /** @type { Response } */
+        /** @type { StreamsResponse } */
         const response = await this.#get(endPoint + query);
         return response;
     }
