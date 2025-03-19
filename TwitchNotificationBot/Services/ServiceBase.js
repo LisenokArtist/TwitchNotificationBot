@@ -1,6 +1,8 @@
-const ServiceBase = class ServiceBase {
+const { EventEmitter } = require('node:events');
+
+const ServiceBase = class ServiceBase extends EventEmitter {
     constructor() {
-        
+        super();
     }
 
     async Start() {
