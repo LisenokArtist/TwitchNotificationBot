@@ -66,4 +66,40 @@ describe('Uncategored', function () {
         const result = users.map(x => `user_login=${x}`).join('&');
         console.log(result);
     });
+    it('Streams event triggers', () => {
+        const channel = (key, value) => {
+            return {
+                key: key,
+                value: value
+            }
+        }
+        const monitoredChannels = [
+            channel(1, "channel1"),
+            channel(2, "channel2"),
+            channel(3, "channel3"),
+            channel(4, "channel4"),
+        ];
+
+        var LiveChannels = [
+            channel(1, "channel1")
+        ]
+
+        let getStreams = [1, 3];
+
+        monitoredChannels.forEach(x => {
+            const isLive = getStreams.find(q => q === x.key);
+            if (isLive) {
+                const isAlreadyLive = LiveChannels.find(l => l.key === x.key);
+                if (isAlreadyLive) {
+                    console.log(`${x.value} is updated`);
+                }
+                else {
+                    console.log(`${x.value} is live now`);
+                }
+            }
+            else {
+                console.log(`${x.value} is now offline`)
+            }
+        })
+    });
 })
