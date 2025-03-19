@@ -1,6 +1,6 @@
-class ServiceBase {
-    constructor(token) {
-        this.token = token;
+const ServiceBase = class ServiceBase {
+    constructor() {
+        
     }
 
     async Start() {
@@ -12,4 +12,4 @@ class ServiceBase {
     }
 }
 
-module.exports = ServiceBase;
+module.exports = { ServiceBase };

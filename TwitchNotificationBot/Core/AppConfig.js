@@ -7,9 +7,11 @@ class AppConfig {
      * Создает класс с найстройками всего решения
      * @param {DiscordConfig} discordConfig
      */
-    constructor(discordConfig) {
+    constructor(discordConfig, twitchConfig) {
         /** @type {DiscordConfig} */
         this.discordConfig = discordConfig;
+        /** @type {TwitchConfig} */
+        this.twitchConfig = twitchConfig;
     }
 
     /**
@@ -22,7 +24,7 @@ class AppConfig {
             fs.writeFileSync(filePath, json);
             return true;
         } catch (e) {
-            console.log('Unable to read app config file with error: ' + e);
+            console.log('Unable to save app config file with error: ' + e);
         }
         return false;
     }
@@ -49,7 +51,7 @@ class AppConfig {
 
 class DiscordConfig {
     /**
-     * Создает класс с найстройками для модуля Discord
+     * Создает класс с настройками для модуля Discord
      * @param {String} token
      * @param {String} clientId
      * @param {String} guildId
@@ -63,4 +65,18 @@ class DiscordConfig {
         this.guildId = guildId;
     }
 }
-module.exports = { AppConfig, DiscordConfig };
+
+class TwitchConfig {
+    /**
+     * Создает класс с настройками для модуля Twitch
+     * @param {String} clientId
+     * @param {String} secretId
+     */
+    constructor(clientId, secretId) {
+        /** @type {String} */
+        this.clientId = clientId;
+        /** @type {String} */
+        this.secretId = secretId;
+    }
+}
+module.exports = { AppConfig, DiscordConfig, TwitchConfig};
