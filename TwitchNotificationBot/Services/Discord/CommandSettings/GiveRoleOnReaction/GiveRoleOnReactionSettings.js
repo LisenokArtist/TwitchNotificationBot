@@ -73,7 +73,7 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
                 return false;
             }
             return true;
-        })
+        });
         console.log(result.length);
         return result;
     }
