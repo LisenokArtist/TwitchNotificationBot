@@ -4,8 +4,8 @@ const filePath = path.join(__dirname, 'AuthToken.json');
 const { TwitchConfig } = require('../../Core/AppConfig');
 const { ServiceBase } = require('../ServiceBase');
 const { AuthToken } = require('../../Core/Twitch/TwitchModels');
-const { TokenResponse, StreamsResponse } = require('../../Core/Twitch/TwitchApiModels');
-const { StreamMonitorManager } = require('./StreamMonitorManager');
+const { TokenResponse, StreamsResponse, StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
+const { StreamMonitorManager, StreamMonitorEventProvider, OnStreamEventArgs } = require('./StreamMonitorManager');
 const ingestUrl = "https://ingest.twitch.tv";
 const helixUrl = "https://api.twitch.tv/helix";
 
@@ -25,6 +25,20 @@ const TwitchService = class TwitchService extends ServiceBase {
         this.authToken;
 
         this.streamMonitorManager = new StreamMonitorManager(this, 60);
+        this.streamMonitorManager.setChannelsByName(['nohalfmeasuress']);
+        this.#registerEvents();
+    }
+
+    #registerEvents() {
+        this.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, e => this.#onStream(e));
+        this.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e));
+        this.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded, e => this.#onStream(e));
+        this.streamMonitorManager.on(StreamMonitorEventProvider.OnTimerTick, e => console.log(e));
+    }
+
+    /** @param {OnStreamEventArgs} streamEventArgs */
+    #onStream(streamEventArgs) {
+        console.log(streamEventArgs.description);
     }
 
     /**
@@ -64,21 +78,36 @@ const TwitchService = class TwitchService extends ServiceBase {
      * @returns {TokenResponse}
      */
     async #getNewTokenAsync() {
-        const url = `https://id.twitch.tv/oauth2/token?client_id=${this.clientId}&client_secret=${this.secretId}&grant_type=client_credentials`;
-        const response = await fetch(url, {
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            method: "POST"
-        });
-
-        if (!response.ok) {
-            throw new Error(response.statusText);
+        const data = {
+            client_id: this.clientId,
+            client_secret: this.secretId,
         }
+        const endPoint = 'https://id.twitch.tv/oauth2/token';
+        const options = {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            method: "POST",
+            body: JSON.stringify(data)
+        }
+        const response = await fetch(endPoint, options);
+        const result = await response.text();
+        try {
+            return JSON.parse(result);
+        } catch (e) {
+            this.#error(e);
+            return undefined;
+        }
+        //const url = `https://id.twitch.tv/oauth2/token?client_id=${this.clientId}&client_secret=${this.secretId}&grant_type=client_credentials`;
+        //const options = {
+        //    headers: {
+        //        "Content-Type": "application/x-www-form-urlencoded"
+        //    },
+        //    method: "POST"
+        //}
 
-        /** @type {TokenResponse}*/
-        const result = await response.json();
-        return result;
+        //const response = await fetch(url, options);
+        //return await response.json();
     }
 
     async #refresh() {
@@ -141,7 +170,7 @@ const TwitchService = class TwitchService extends ServiceBase {
      * Выполняет get запрос
      * @param {any} endpoint
      * @param {any} type
-     * @returns {any}
+     * @returns {Response}
      */
     async #get(endpoint, base = helixUrl) {
         if (!this.authToken) {
@@ -157,6 +186,7 @@ const TwitchService = class TwitchService extends ServiceBase {
             }
         }
 
+        //тут возникает ошибка фетча
         const response = await fetch(url, options);
 
         switch (response.status) {
@@ -166,15 +196,19 @@ const TwitchService = class TwitchService extends ServiceBase {
             }
         }
 
-        const result = await response.json();
-        return result;
+        return response;
     }
 
     async Start() {
-        this.#updateToken();
+        await this.#updateTokenAsync();
+        this.streamMonitorManager.startTimer();
     }
 
-    async #updateToken() {
+    async Stop() {
+        this.streamMonitorManager.stopTimer();
+    }
+
+    async #updateTokenAsync() {
         const getAndSetToken = async () => {
             const token = await this.#getNewTokenAsync();
             this.authToken = new AuthToken(
@@ -204,19 +238,21 @@ const TwitchService = class TwitchService extends ServiceBase {
     /**
      * 
      * @param { String[] } userLogins
-     * @returns { StreamsResponse }
+     * @returns { StreamResponse[] | null }
      */
     async getStreams(userLogins) {
         const endPoint = '/streams';
 
-        if (!userLogins) {
-            return await this.#get(endPoint);
-        }
+        const query = (!userLogins) ? '' : `?${userLogins.map(x => `user_login=${x}`).join('&')}`;
+        try {
+            const response = await this.#get(endPoint + query);
+            /** @type { StreamsResponse } */
+            const result = await response.json();
+            return result.data;
+        } catch (e) {
 
-        const query = `?${userLogins.map(x => `user_login=${x}`).join('&') }`;
-        /** @type { StreamsResponse } */
-        const response = await this.#get(endPoint + query);
-        return response;
+        } 
+        return null;
     }
 }
 
