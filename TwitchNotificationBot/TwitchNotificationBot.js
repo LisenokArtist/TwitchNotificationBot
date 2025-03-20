@@ -1,6 +1,7 @@
 const { DiscordService } = require('./Services/Discord/DiscordService');
 const { AppConfig, DiscordConfig } = require('./Core/AppConfig');
 const { ServiceBase } = require('./Services/ServiceBase');
+const { TwitchService } = require('./Services/Twitch/TwitchService');
 
 class TwitchNotificationBot {
     /**
@@ -8,7 +9,9 @@ class TwitchNotificationBot {
      */
     constructor(config) {
         /** @type {ServiceBase[]} */
-        this.services = [new DiscordService(config.discordConfig)];
+        this.services = [
+            //new DiscordService(config.discordConfig),
+            new TwitchService(config.twitchConfig)];
 
         /** @type {Boolean} */
         this.isRunning = false;
@@ -21,6 +24,8 @@ class TwitchNotificationBot {
         } catch (e) {
             console.log(`Unable to start services: ${e}`);
         }
+            //this.services.forEach(async x => await x.Start());
+            //this.isRunning = true;
     }
 
     async Stop() {
