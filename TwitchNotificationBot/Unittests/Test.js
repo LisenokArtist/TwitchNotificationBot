@@ -1,6 +1,7 @@
 ﻿const { GiveRoleOnReactionSettings } = require('../Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
 const { AppConfig, DiscordConfig, TwitchConfig } = require('../Core/AppConfig');
 const { TwitchService } = require('../Services/Twitch/TwitchService');
+const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitorManager');
 
 
 describe('AppConfig', function () {
@@ -48,9 +49,34 @@ describe('TwitchService', function () {
         config.load();
         const service = new TwitchService(config.twitchConfig);
         await service.Start();
-        const streams = service.getStreams(['cinema2u']);
+        const streams = await service.getStreams(['cinema2u']);
         console.log(streams);
         return streams;
+    });
+    it('StreamManager', async function () {
+        const config = new AppConfig();
+        config.load();
+        const service = new TwitchService(config.twitchConfig);
+        service.streamMonitorManager.timerInterval = 30;
+        await service.streamMonitorManager.setChannelsByName('mnemonicman');
+
+        let ticksLeft = 2;
+
+        service.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, (e) => {
+            console.log(e.description);
+        });
+        service.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded, (e) => {
+            console.log(e.description);
+        });
+        service.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, (e) => {
+            console.log(e.description);
+        });
+        service.streamMonitorManager.on(StreamMonitorEventProvider.OnTimerTick, (e) => {
+            console.log(e);
+            ticksLeft--;
+        });
+
+        this.timeout(10 * 1000);
     });
 });
 
@@ -101,5 +127,9 @@ describe('Uncategored', function () {
                 console.log(`${x.value} is now offline`)
             }
         })
+    });
+    it('String compare', () => {
+        const result = 'jmarianne' === 'jmarianne';
+        console.log(result);
     });
 })
