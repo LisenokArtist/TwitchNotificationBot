@@ -192,7 +192,7 @@ const TwitchService = class TwitchService extends ServiceBase {
         switch (response.status) {
             case 401: {
                 await this.#refresh();
-                return this.#get(endpoint, base);
+                return await this.#get(endpoint, base);
             }
         }
 
