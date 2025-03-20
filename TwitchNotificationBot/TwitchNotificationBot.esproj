@@ -2,9 +2,6 @@
   <ItemGroup>
     <None Remove="Services\Discord\CommandSettings\GiveRoleOnReaction\GiveRoleOnReactionSettings.json" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Services\Telegram\" />
-  </ItemGroup>
   <PropertyGroup>
     <JavaScriptTestRoot>Unittests\</JavaScriptTestRoot>
     <JavaScriptTestFramework>Mocha</JavaScriptTestFramework>
