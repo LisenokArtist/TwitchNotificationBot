@@ -6,12 +6,16 @@ class AppConfig {
     /**
      * Создает класс с найстройками всего решения
      * @param {DiscordConfig} discordConfig
+     * @param {TwitchConfig} twitchConfig
+     * @param {TelegramConfig} telegramConfig
      */
-    constructor(discordConfig, twitchConfig) {
+    constructor(discordConfig, twitchConfig, telegramConfig) {
         /** @type {DiscordConfig} */
         this.discordConfig = discordConfig;
         /** @type {TwitchConfig} */
         this.twitchConfig = twitchConfig;
+        /** @type {TelegramConfig} */
+        this.telegramConfig = telegramConfig;
     }
 
     /**
@@ -47,7 +51,6 @@ class AppConfig {
         return false;
     }
 }
-//
 
 class DiscordConfig {
     /**
@@ -79,4 +82,19 @@ class TwitchConfig {
         this.secretId = secretId;
     }
 }
-module.exports = { AppConfig, DiscordConfig, TwitchConfig};
+
+class TelegramConfig {
+    /**
+     * Создает класс с настройками для модуля Telegram
+     * @param {String} token
+     * @param {Number} chatId
+     */
+    constructor(token, chatId) {
+        /** @type {String} */
+        this.token = token
+        /** @type {Number} */
+        this.chatId = chatId;
+    }
+}
+
+module.exports = { AppConfig, DiscordConfig, TwitchConfig, TelegramConfig };

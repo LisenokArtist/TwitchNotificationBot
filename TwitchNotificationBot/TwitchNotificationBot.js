@@ -11,7 +11,9 @@ class TwitchNotificationBot {
         /** @type {ServiceBase[]} */
         this.services = [
             //new DiscordService(config.discordConfig),
-            new TwitchService(config.twitchConfig)];
+            //new TwitchService(config.twitchConfig),
+            new TelegramService(config.telegramConfig)
+        ];
 
         /** @type {Boolean} */
         this.isRunning = false;
@@ -24,8 +26,6 @@ class TwitchNotificationBot {
         } catch (e) {
             console.log(`Unable to start services: ${e}`);
         }
-            //this.services.forEach(async x => await x.Start());
-            //this.isRunning = true;
     }
 
     async Stop() {
