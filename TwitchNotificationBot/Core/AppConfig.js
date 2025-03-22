@@ -8,14 +8,17 @@ class AppConfig {
      * @param {DiscordConfig} discordConfig
      * @param {TwitchConfig} twitchConfig
      * @param {TelegramConfig} telegramConfig
+     * @param {NotificationConfig} notificationConfig
      */
-    constructor(discordConfig, twitchConfig, telegramConfig) {
+    constructor(discordConfig, twitchConfig, telegramConfig, notificationConfig) {
         /** @type {DiscordConfig} */
         this.discordConfig = discordConfig;
         /** @type {TwitchConfig} */
         this.twitchConfig = twitchConfig;
         /** @type {TelegramConfig} */
         this.telegramConfig = telegramConfig;
+        /** @type {NotificationConfig} */
+        this.notificationConfig = notificationConfig;
     }
 
     /**
@@ -97,4 +100,10 @@ class TelegramConfig {
     }
 }
 
-module.exports = { AppConfig, DiscordConfig, TwitchConfig, TelegramConfig };
+class NotificationConfig {
+    constructor() {
+
+    }
+}
+
+module.exports = { AppConfig, DiscordConfig, TwitchConfig, TelegramConfig, NotificationConfig };

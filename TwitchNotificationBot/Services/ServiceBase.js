@@ -1,8 +1,11 @@
 const { EventEmitter } = require('node:events');
+const { TwitchNotificationBot } = require('../TwitchNotificationBot');
 
 const ServiceBase = class ServiceBase extends EventEmitter {
     constructor() {
         super();
+        /** @type {TwitchNotificationBot}*/
+        this.parent;
     }
 
     async Start() {
