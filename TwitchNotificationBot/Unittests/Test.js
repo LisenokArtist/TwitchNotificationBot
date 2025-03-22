@@ -132,4 +132,33 @@ describe('Uncategored', function () {
         const result = 'jmarianne' === 'jmarianne';
         console.log(result);
     });
+    it('Nesting parents', () => {
+        var myApp = {
+
+            init: function () {
+                for (var i in this) {
+                    if (typeof this[i] == 'object') {
+                        this[i].init = this.init;
+                        this[i].init();
+                        this[i].parent = this;
+                    }
+                }
+                return this;
+            },
+
+            obj1: {
+                obj2: {
+                    notify: function () {
+                        console.log(this.parent.parent.obj3.msg);
+                    }
+                }
+            },
+
+            obj3: {
+                msg: 'Hello'
+            }
+
+        }.init();
+
+    })
 })
