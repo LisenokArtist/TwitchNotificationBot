@@ -1,17 +1,17 @@
 const { EventEmitter } = require('node:events');
-//const { TwitchService } = require('./TwitchService');
+const { TwitchService } = require('./TwitchService');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels')
 
 const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     /**
      * Инициализирует класс менеджера стримов, который отслеживает их статус
-     * @param {any} twitchService Основной модуль, которому принадлежит менеджер
+     * @param {TwitchService} twitchService Основной модуль, которому принадлежит менеджер
      * @param {Number} checkIntervalInSeconds Как часто будет вызываться метод проверки стримов в секундах
      */
     constructor(twitchService, checkIntervalInSeconds) {
         super();
 
-        /** @type { any } */
+        /** @type { TwitchService } */
         this.twitchService = twitchService;
         /** @type { Number } */
         this.checkIntervalInSeconds = checkIntervalInSeconds;
@@ -23,8 +23,6 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
 
         this.timerInterval = null;
     }
-
-
 
     /** Останавливает таймер проверки отслеживаемых стримов */
     stopTimer() {

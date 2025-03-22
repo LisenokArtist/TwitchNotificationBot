@@ -1,10 +1,9 @@
-const { DiscordService } = require('./Services/Discord/DiscordService');
-const { AppConfig, DiscordConfig } = require('./Core/AppConfig');
+const { AppConfig } = require('./Core/AppConfig');
 const { ServiceBase } = require('./Services/ServiceBase');
 const { TwitchService } = require('./Services/Twitch/TwitchService');
+const { DiscordService } = require('./Services/Discord/DiscordService');
 const { TelegramService } = require('./Services/Telegram/TelegramService');
 const { NotificationService } = require('./Services/Notification/NotificationService');
-
 
 class TwitchNotificationBot {
     /**
@@ -13,10 +12,10 @@ class TwitchNotificationBot {
     constructor(config) {
         /** @type {ServiceBase[]} */
         this.services = [
-            //new DiscordService(config.discordConfig),
-            //new TwitchService(config.twitchConfig),
-            //new TelegramService(config.telegramConfig),
-            new NotificationService()
+            new TwitchService(config.twitchConfig),
+            new DiscordService(config.discordConfig),
+            new TelegramService(config.telegramConfig),
+            new NotificationService(config.notificationConfig)
         ];
 
         /** @type {Boolean} */

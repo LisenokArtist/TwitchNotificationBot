@@ -5,7 +5,7 @@ const { TwitchConfig } = require('../../Core/AppConfig');
 const { ServiceBase } = require('../ServiceBase');
 const { AuthToken } = require('../../Core/Twitch/TwitchModels');
 const { TokenResponse, StreamsResponse, StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
-const { StreamMonitorManager, StreamMonitorEventProvider, OnStreamEventArgs } = require('./StreamMonitorManager');
+const { StreamMonitorManager } = require('./StreamMonitorManager');
 const ingestUrl = "https://ingest.twitch.tv";
 const helixUrl = "https://api.twitch.tv/helix";
 
@@ -25,20 +25,26 @@ const TwitchService = class TwitchService extends ServiceBase {
         this.authToken;
 
         this.streamMonitorManager = new StreamMonitorManager(this, 60);
-        this.streamMonitorManager.setChannelsByName(['nohalfmeasuress']);
-        this.#registerEvents();
+        this.setParentToManager();
     }
 
-    #registerEvents() {
-        this.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, e => this.#onStream(e));
-        this.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e));
-        this.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded, e => this.#onStream(e));
-        this.streamMonitorManager.on(StreamMonitorEventProvider.OnTimerTick, e => console.log(e));
+    setParentToManager() {
+        if (this.constructor.name == 'StreamMonitorManager') return;
+
+        this.streamMonitorManager.setParentToManager = this.setParentToManager;
+        this.streamMonitorManager.setParentToManager();
+        this.streamMonitorManager.twitchService = this;
+        delete this.streamMonitorManager.setParentToManager;
+
+        return this;
     }
 
-    /** @param {OnStreamEventArgs} streamEventArgs */
-    #onStream(streamEventArgs) {
-        console.log(streamEventArgs.description);
+    /**
+     * Задает список каналов к мониторингу по имени
+     * @param {String[]} names Список названий каналов
+     */
+    setChannelsByName(channels) {
+        this.streamMonitorManager.setChannelsByName(channels);
     }
 
     /**
@@ -199,11 +205,13 @@ const TwitchService = class TwitchService extends ServiceBase {
         return response;
     }
 
+    /** Запускает работу сервиса */
     async Start() {
         await this.#updateTokenAsync();
         this.streamMonitorManager.startTimer();
     }
 
+    /** Останавливает работу сервиса */
     async Stop() {
         this.streamMonitorManager.stopTimer();
     }
@@ -236,7 +244,7 @@ const TwitchService = class TwitchService extends ServiceBase {
     }
 
     /**
-     * 
+     * Получает стримы
      * @param { String[] } userLogins
      * @returns { StreamResponse[] | null }
      */
@@ -255,7 +263,5 @@ const TwitchService = class TwitchService extends ServiceBase {
         return null;
     }
 }
-
-
 
 module.exports = { TwitchService };
