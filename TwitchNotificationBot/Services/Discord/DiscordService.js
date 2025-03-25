@@ -1,4 +1,3 @@
-const { ServiceBase } = require('../ServiceBase');
 const { IntentsBitField, Partials } = require('../../node_modules/discord.js/src/index');
 const Client = require('../../node_modules/discord.js/src/client/Client');
 const { GatewayIntentBits } = require('../../node_modules/discord-api-types/v10');
@@ -10,6 +9,7 @@ const { REST } = require('../../node_modules/@discordjs/rest/dist/index');
 const { Routes } = require('discord.js');
 const { DiscordConfig } = require('../../Core/AppConfig');
 const { InteractionCommand } = require('../../Core/InteractionCommand');
+const { ServiceBase } = require('../ServiceBase');
 
 class DiscordService extends ServiceBase {
     /** @param {DiscordConfig} config */
