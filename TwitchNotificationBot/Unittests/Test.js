@@ -2,6 +2,7 @@
 const { AppConfig, DiscordConfig, TwitchConfig } = require('../Core/AppConfig');
 const { TwitchService } = require('../Services/Twitch/TwitchService');
 const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitorManager');
+const { DiscordService } = require('../Services/Discord/DiscordService');
 
 
 describe('AppConfig', function () {
@@ -78,6 +79,26 @@ describe('TwitchService', function () {
 
         this.timeout(10 * 1000);
     });
+    it('Retry test', async () => {
+        const promise = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                let retry = 3;
+                do {
+                    console.log('Try complite promise');
+                    retry--;
+
+                    if (retry < 1)
+                        return resolve('Done');
+
+                    console.log(`Timeout. Retry ${retry}`);
+
+                } while (retry > 0);
+
+                return reject('Non success');
+            }, 5000);
+        });
+        await promise.then(x => console.log(x)).catch(x => console.log(x));
+    }).timeout(50000);
 });
 
 describe('Uncategored', function () {
@@ -160,5 +181,9 @@ describe('Uncategored', function () {
 
         }.init();
 
+    });
+    it('Map', () => {
+        const map = new Map();
+        return map;
     })
 })
