@@ -4,7 +4,10 @@ const { TwitchService } = require('../Twitch/TwitchService');
 const { DiscordService } = require('../Discord/DiscordService');
 const { TelegramService } = require('../Telegram/TelegramService');
 const { StreamMonitorEventProvider, OnStreamEventArgs } = require('../Twitch/StreamMonitorManager');
-const { NotificationConfig } = require('../../Core/AppConfig')
+const { NotificationConfig } = require('../../Core/AppConfig');
+const { Dictionary, KeyValuePair } = require('../../Core/Dictionary');
+const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
+const { resolve } = require('../../node_modules/discord.js/src/util/ActivityFlagsBitField');
 
 class NotificationService extends ServiceBase {
 
@@ -20,10 +23,11 @@ class NotificationService extends ServiceBase {
         this.telegramChannelId = config.telegramRespondChannelId;
 
         /** @type {Number} */
-        this.retryCounts = 3;
-        /** @type {Number} */
         this.retryInSeconds = 60;
-        this.notificationQueie = [];
+
+        /** @type {Dictionary}*/
+        this.notificationQueie = new Dictionary();
+
         /** @type {Boolean} */
         this.isEventsRegistered = false;
     }
@@ -84,15 +88,106 @@ class NotificationService extends ServiceBase {
 
     /** @param {TwitchService} twitch */
     #registerTwitchEvents(twitch) {
-        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, e => this.#onStream(e));
-        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e));
-        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded, e => this.#onStream(e));
+        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamStarted));
+        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamUpdated));
+        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded,   e => this.#onStream(e, StreamMonitorEventProvider.OnStreamEnded));
     }
 
-    /** @param {OnStreamEventArgs} streamEventArgs */
-    #onStream(streamEventArgs) {
-        console.log(streamEventArgs.description);
+    /**
+     * 
+     * @param {OnStreamEventArgs} eventArgs
+     * @param {StreamMonitorEventProvider} event
+     */
+    #onStream(eventArgs, event) {
+        try {
+            switch (event) {
+                case (StreamMonitorEventProvider.OnStreamStarted):
+                    this.notificationQueie.push(
+                        new KeyValuePair(eventArgs.stream.id, eventArgs.stream));
+                    this.emit(
+                        NotificationEventProvider.OnStreamStarted,
+                        new OnNotificationEventArgs(
+                            this.notificationQueie.collection[this.notificationQueie.collection.length - 1]));
+                    break;
+                case (StreamMonitorEventProvider.OnStreamUpdated):
+                    break;
+                case (StreamMonitorEventProvider.OnStreamEnded):
+                    /** @type {StreamResponse}*/
+                    const stream = this.notificationQueie.popBy(x => x.key === eventArgs.stream.id).value;
+                    this.emit(
+                        NotificationEventProvider.OnStreamEnded,
+                        new OnNotificationEventArgs(stream));
+                    break;
+            }
+            console.log(eventArgs.description);
+        } catch (e) {
+            console.log(`Unexpected error onStream event: ${e}`);
+        }
+    }
+
+    /** @param {OnNotificationEventArgs} eventArgs */
+    #onStreamStarted(eventArgs) {
+
+        //const promise = new Promise(async (resolve, reject) => {
+        //    const respondFunc = async () => {
+        //        const isPassed = await tryRespondToDiscord();
+        //        if (isPassed) { return true; }
+        //        return false;
+        //    }
+
+        //    let retry = this.retryCounts;
+        //    const pause = 60 * 1000;
+
+        //    setTimeout(async function func() {
+        //        retry--;
+
+        //        if (retry > 0) {
+        //            if (await respondFunc(resolve)) {
+        //                resolve(true);
+        //            } else {
+        //                setTimeout(func(), pause)
+        //            }
+        //        }
+        //    }, pause)
+        //    reject('Respond to chat timeout');
+        //});
+        //promise.catch(x => console.log(x));
+    }
+
+    /** @param {OnNotificationEventArgs} eventArgs */
+    #onStreamUpdated(eventArgs) {
+
+    }
+
+    /** @param {OnNotificationEventArgs} eventArgs */
+    #onStreamEnded(eventArgs) {
+
+    }
+
+    async tryRespondToDiscord(client) {
+
+    }
+
+    async tryRespondToTelegram(client) {
+
     }
 }
 
-module.exports = { NotificationService }
+const OnNotificationEventArgs = class OnNotificationEventArgs {
+    /**
+     * Создает EventArgs класс для событий уведомлений статуса стрима
+     * @param {StreamResponse} stream Данные о стриме
+     */
+    constructor(stream) {
+        /** @type {StreamResponse} */
+        this.stream = stream;
+    }
+}
+
+const NotificationEventProvider = {
+    OnStreamStarted: StreamMonitorEventProvider.OnStreamStarted,
+    OnStreamUpdated: StreamMonitorEventProvider.OnStreamUpdated,
+    OnStreamEnded: StreamMonitorEventProvider.OnStreamEnded
+}
+
+module.exports = { NotificationService, OnNotificationEventArgs, NotificationEventProvider }
