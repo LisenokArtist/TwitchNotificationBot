@@ -28,6 +28,7 @@ class NotificationService extends ServiceBase {
         /** @type {Dictionary}*/
         this.notificationQueie = new Dictionary();
 
+        this.timerInterval = null;
         /** @type {Boolean} */
         this.isEventsRegistered = false;
     }
@@ -65,6 +66,8 @@ class NotificationService extends ServiceBase {
             base.services[discordIndex],
             base.services[telegramIndex]);
 
+        this.#registerSelfEvents();
+
         this.isEventsRegistered = true;
     }
 
@@ -93,6 +96,12 @@ class NotificationService extends ServiceBase {
         twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded,   e => this.#onStream(e, StreamMonitorEventProvider.OnStreamEnded));
     }
 
+    #registerSelfEvents() {
+        this.on(NotificationEventProvider.OnStreamStarted, e => this.#onStreamStarted(e));
+        this.on(NotificationEventProvider.OnStreamUpdated, e => this.#onStreamUpdated(e));
+        this.on(NotificationEventProvider.OnStreamEnded,   e => this.#onStreamEnded(e));
+    }
+
     /**
      * 
      * @param {OnStreamEventArgs} eventArgs
@@ -110,6 +119,13 @@ class NotificationService extends ServiceBase {
                             this.notificationQueie.collection[this.notificationQueie.collection.length - 1]));
                     break;
                 case (StreamMonitorEventProvider.OnStreamUpdated):
+                    const index = this.notificationQueie.findIndex(x => x.key === eventArgs.stream.id);
+                    if (index != -1) {
+                        this.notificationQueie.collection[index] = eventArgs.stream;
+                        this.emit(
+                            NotificationEventProvider.OnStreamUpdated,
+                            new OnNotificationEventArgs(this.notificationQueie.collection[index]));
+                    }
                     break;
                 case (StreamMonitorEventProvider.OnStreamEnded):
                     /** @type {StreamResponse}*/
@@ -169,6 +185,41 @@ class NotificationService extends ServiceBase {
     }
 
     async tryRespondToTelegram(client) {
+
+    }
+    /**
+     * Запускает таймер обновления
+     * @returns {Boolean} True если запуск был успешным
+     */
+    #startTimer() {
+        const isEmpty = !this.notificationQueie.collection.length > 0;
+
+        if (isEmpty && !this.timerInterval) {
+            this.timerInterval = setInterval(
+                () => {
+                    this.#onTimerCallback();
+                }, this.retryInSeconds * 1000
+            );
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Останавливает таймер обновления
+     * @returns {Boolean} True если остановка была успешной
+     */
+    #stopTimer() {
+        const isEmpty = !this.notificationQueie.collection.length > 0;
+        if (isEmpty) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+            return true;
+        }
+        return false;
+    }
+
+    #onTimerCallback() {
 
     }
 }
