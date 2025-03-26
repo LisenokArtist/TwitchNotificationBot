@@ -6,6 +6,15 @@ const Dictionary = class Dictionary {
     }
 
     /**
+     * Находит индекс элемента коллекции
+     * @param {(obj: KeyValuePair, index: number, array: KeyValuePair[])} predicate
+     * @returns {Number}
+     */
+    findIndex(predicate) {
+        return this.collection.findIndex(predicate);
+    }
+
+    /**
      * Добавляет элемент в коллекцию
      * @param {KeyValuePair} item
      */
