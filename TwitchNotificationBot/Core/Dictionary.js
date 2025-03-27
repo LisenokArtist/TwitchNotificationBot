@@ -1,3 +1,6 @@
+const { KeyValuePair } = require('./Collections/KeyValuePair');
+
+/** Возможно эта структура больше не понадобится */
 const Dictionary = class Dictionary {
     constructor() {
         /** @type {KeyValuePair[]} */
@@ -39,11 +42,11 @@ const Dictionary = class Dictionary {
     }
 
     /**
-     * Убирает элемент из коллекции по ключу 
+     * Убирает первый элемент из коллекции по ключу 
      * @param {(obj: KeyValuePair, index: number, array: KeyValuePair[])} predicate
      * @returns {KeyValuePair}
      */
-    popBy(predicate) {
+    shiftBy(predicate) {
         const index = this.collection.findIndex(predicate);
         if (index === -1) return null;
 
@@ -53,11 +56,4 @@ const Dictionary = class Dictionary {
     }
 }
 
-const KeyValuePair = class KeyValuePair {
-    constructor(key, value) {
-        this.key = key;
-        this.value = value;
-    }
-}
-
-module.exports = { Dictionary, KeyValuePair }
+module.exports = { Dictionary }
