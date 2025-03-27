@@ -27,7 +27,9 @@ class NotificationService extends ServiceBase {
         this.retryInSeconds = 60;
 
         /** @type {Dictionary}*/
-        this.notificationQueie = new Dictionary();
+        this.toTelegramNotificationQueie = new Dictionary();
+        /** @type {Dictionary}*/
+        this.toDiscordNotificationQueie = new Dictionary();
 
         this.timerInterval = null;
         /** @type {Boolean} */
@@ -106,34 +108,65 @@ class NotificationService extends ServiceBase {
     /**
      * 
      * @param {OnStreamEventArgs} eventArgs
+     */
+    #addToQueie(eventArgs) {
+        const item = new KeyValuePair(eventArgs.stream.id, eventArgs.stream);
+        this.toTelegramNotificationQueie.push(item);
+        this.toDiscordNotificationQueie.push(item);
+        //this.emit(
+        //    NotificationEventProvider.OnStreamStarted,
+        //    new OnNotificationEventArgs(
+        //        this.toTelegramNotificationQueie.collection[this.toTelegramNotificationQueie.collection.length - 1]));
+    }
+
+    /**
+     * 
+     * @param {OnStreamEventArgs} eventArgs
+     */
+    #updateQueie(eventArgs) {
+        const tIndex = this.toTelegramNotificationQueie.findIndex(x => x.key === eventArgs.stream.id);
+        if (tIndex != -1) {
+            this.toTelegramNotificationQueie.collection[tIndex] = eventArgs.stream;
+            //this.emit(
+            //    NotificationEventProvider.OnStreamUpdated,
+            //    new OnNotificationEventArgs(this.toTelegramNotificationQueie.collection[index]));
+        }
+
+        const dIndex = this.toDiscordNotificationQueie.findIndex(x => x.key === eventArgs.stream.id);
+        if (dIndex != -1) {
+            this.toDiscordNotificationQueie.collection[dIndex] = eventArgs.stream;
+        }
+    }
+
+    /**
+     * 
+     * @param {OnStreamEventArgs} eventArgs
+     */
+    #removeFromQueie(eventArgs) {
+        /** @type {StreamResponse}*/
+        const tStream = this.toTelegramNotificationQueie.shiftBy(x => x.key === eventArgs.stream.id).value;
+        const dStream = this.toDiscordNotificationQueie.shiftBy(x => x.key === eventArgs.stream.id).value;
+        //this.emit(
+        //    NotificationEventProvider.OnStreamEnded,
+        //    new OnNotificationEventArgs(tStream));
+    }
+
+    /**
+     * 
+     * @param {OnStreamEventArgs} eventArgs
      * @param {StreamMonitorEventProvider} event
      */
     #onStream(eventArgs, event) {
         try {
             switch (event) {
                 case (StreamMonitorEventProvider.OnStreamStarted):
-                    this.notificationQueie.push(
-                        new KeyValuePair(eventArgs.stream.id, eventArgs.stream));
-                    this.emit(
-                        NotificationEventProvider.OnStreamStarted,
-                        new OnNotificationEventArgs(
-                            this.notificationQueie.collection[this.notificationQueie.collection.length - 1]));
+                    this.#addToQueie(eventArgs);
                     break;
                 case (StreamMonitorEventProvider.OnStreamUpdated):
-                    const index = this.notificationQueie.findIndex(x => x.key === eventArgs.stream.id);
-                    if (index != -1) {
-                        this.notificationQueie.collection[index] = eventArgs.stream;
-                        this.emit(
-                            NotificationEventProvider.OnStreamUpdated,
-                            new OnNotificationEventArgs(this.notificationQueie.collection[index]));
-                    }
+                    this.#updateQueie(eventArgs);
                     break;
                 case (StreamMonitorEventProvider.OnStreamEnded):
-                    /** @type {StreamResponse}*/
-                    const stream = this.notificationQueie.popBy(x => x.key === eventArgs.stream.id).value;
-                    this.emit(
-                        NotificationEventProvider.OnStreamEnded,
-                        new OnNotificationEventArgs(stream));
+                    this.#removeFromQueie(eventArgs);
                     break;
             }
             console.log(eventArgs.description);
@@ -193,7 +226,7 @@ class NotificationService extends ServiceBase {
      * @returns {Boolean} True если запуск был успешным
      */
     #startTimer() {
-        const isEmpty = !this.notificationQueie.collection.length > 0;
+        const isEmpty = !this.toTelegramNotificationQueie.collection.length > 0;
 
         if (isEmpty && !this.timerInterval) {
             this.timerInterval = setInterval(
@@ -211,7 +244,7 @@ class NotificationService extends ServiceBase {
      * @returns {Boolean} True если остановка была успешной
      */
     #stopTimer() {
-        const isEmpty = !this.notificationQueie.collection.length > 0;
+        const isEmpty = !this.toTelegramNotificationQueie.collection.length > 0;
         if (isEmpty) {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
