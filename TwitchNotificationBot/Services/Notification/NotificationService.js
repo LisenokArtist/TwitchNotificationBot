@@ -5,7 +5,8 @@ const { DiscordService } = require('../Discord/DiscordService');
 const { TelegramService } = require('../Telegram/TelegramService');
 const { StreamMonitorEventProvider, OnStreamEventArgs } = require('../Twitch/StreamMonitorManager');
 const { NotificationConfig } = require('../../Core/AppConfig');
-const { Dictionary, KeyValuePair } = require('../../Core/Dictionary');
+const { KeyValuePair } = require('../../Core/Collections/KeyValuePair');
+const { Dictionary } = require('../../Core/Collections/Dictionary/Dictionary');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
 const { resolve } = require('../../node_modules/discord.js/src/util/ActivityFlagsBitField');
 
