@@ -79,6 +79,11 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     async #updateLiveStreamAsync() {
         if (this.monitoredChannels.length === 0) return;
 
+        /** @type {StreamPair[]}*/
+        let updated = new Array();
+        /** @type {string[]}*/
+        let ended = new Array();
+
         /** @type {StreamResponse[]}*/
         const result = await this.twitchService.getStreams(this.monitoredChannels);
 
@@ -88,60 +93,121 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
                 e => e.user_login == user_login);
 
             if (stream) {
-                this.#liveStreamUpdated(user_login, stream);
+                updated.push(new StreamPair(user_login, stream));
             } else {
-                this.#liveStreamEnded(user_login);
+                ended.push(user_login);
             }
         })
-    }
 
-    /**
-     * ƒобавл€ет или обновл€ет данные о стриме в кеш
-     * @param {String} user_login
-     * @param {StreamResponse} stream
-     */
-    #liveStreamUpdated(user_login, stream) {
-        const cachedStream = this.liveStreams.find(
-            /** @param {StreamResponse} e */
-            e => e.user_login === user_login);
-        
-        if (cachedStream) {
-            const index = this.liveStreams.indexOf(cachedStream);
-            this.liveStreams[index] = stream;
-            this.emit(StreamMonitorEventProvider.OnStreamUpdated,
-                new OnStreamEventArgs(
-                    user_login,
-                    this.liveStreams[index],
-                    `Stream of ${stream.user_name} is updated`));
-        } else {
-            this.liveStreams.push(stream);
-            this.emit(StreamMonitorEventProvider.OnStreamStarted,
-                new OnStreamEventArgs(
-                    user_login,
-                    stream,
-                    `Stream of ${stream.user_name} is now live`));
+        if (updated.length > 0) {
+            this.#liveStreamsUpdated(updated);
+        }
+
+        if (ended.length > 0) {
+            this.#liveStreamsEnded(ended);
         }
     }
 
     /**
-     * ”дал€ет данные о стриме из кеша
-     * @param {String} user_login
+     * ќбрабатывает коллекцию стримов, попавшие под категорию обновленных
+     * @param {StreamPair[]} items
      */
-    #liveStreamEnded(user_login) {
-        var cachedStream = this.liveStreams.find(
-            /** @param {StreamResponse} e */
-            e => e.user_login == user_login);
+    #liveStreamsUpdated(items) {
+        /** @type {StreamPair[]} */
+        let started = new Array();
+        /** @type {StreamPair[]} */
+        let updated = new Array();
 
-        if (!cachedStream) return;
+        items.forEach(i => {
+            /** */
+            const cachedStream = this.liveStreams.find(s => s.user_login === i.user_login);
 
-        const index = this.liveStreams.indexOf(cachedStream);
-        this.liveStreams = this.liveStreams.slice(index, 1);
-        this.emit(StreamMonitorEventProvider.OnStreamEnded,
-            new OnStreamEventArgs(
-                user_login,
-                cachedStream,
-                `Stream of ${cachedStream.user_name} is now offline`));
+            if (cachedStream) {
+                const index = this.liveStreams.indexOf(cachedStream);
+                this.liveStreams[index] = stream;
+                updated.push(i);
+            } else {
+                this.liveStreams.push(i.stream);
+                started.push(i);
+            }
+        })
+
+        this.#emitStreamsStarted(started);
+        this.#emitStreamsUpdated(updated);
     }
+
+    /**
+     * ќбрабатывает коллекцию стримов, попавшие под категорию завершенных
+     * @param {string[]} items
+     */
+    #liveStreamsEnded(items) {
+        /** @type {StreamPair[]} */
+        let ended = new Array();
+
+        items.forEach(user_login => {
+            const cachedStream = this.liveStreams.find(s => s.user_login === user_login);
+
+            if (!cachedStream) return;
+
+            const index = this.liveStreams.indexOf(cachedStream);
+            this.liveStreams = this.liveStreams.slice(index, 1);
+            ended.push(new StreamPair(user_login, cachedStream))
+        })
+
+        this.#emitStreamsEnded(ended);
+    }
+
+    /**
+     * —оздает событие о начатых стримах
+     * @param {StreamPair[]} streams
+     */
+    #emitStreamsStarted(streams) {
+        if (streams.length > 0) {
+            this.emit(StreamMonitorEventProvider.OnStreamStarted,
+                streams.map(s => new OnStreamEventArgs(
+                    s.user_login,
+                    s.stream,
+                    `Stream of ${s.stream.user_name} is now live`)));
+        }
+    }
+
+    /**
+     * —оздает событие о обновленных стримах.
+     * ћожете переопределить условие при котором будет создано
+     * событие со списком обновленных стримов, например
+     * учитывать только обновленное название канала и описание
+     * @param {StreamPair[]} streams
+     */
+    #emitStreamsUpdated(streams) {
+        if (streams.length > 0) {
+            this.emit(StreamMonitorEventProvider.OnStreamUpdated,
+                streams.map(s => new OnStreamEventArgs(
+                    s.user_login,
+                    s.stream,
+                    `Stream of ${s.stream.user_name} is updated`)));
+        }
+    }
+
+    /**
+     * —оздает событие о завершенных стримах
+     * @param {StreamPair[]} streams
+     */
+    #emitStreamsEnded(streams) {
+        if (streams.length > 0) {
+            this.emit(StreamMonitorEventProvider.OnStreamEnded,
+                streams.map(s => new OnStreamEventArgs(
+                    s.user_login,
+                    s.stream,
+                    `Stream of ${s.stream.user_name} is now offline`)))
+        }
+    }
+}
+
+const StreamPair = function StreamPair(user_login, stream) {
+    /** @type {string} */
+    this.user_login = user_login;
+    /** @type {StreamResponse} */
+    this.stream = stream;
 }
 
 const OnStreamEventArgs = class OnStreamEventArgs {
