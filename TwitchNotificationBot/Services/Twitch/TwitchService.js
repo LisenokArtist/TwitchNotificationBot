@@ -25,13 +25,17 @@ const TwitchService = class TwitchService extends ServiceBase {
         this.authToken;
 
         this.streamMonitorManager = new StreamMonitorManager(this, 60);
-        this.setParentToManager();
+        this.#setParentToManager();
     }
 
-    setParentToManager() {
-        if (this.constructor.name == 'StreamMonitorManager') return;
+    /**
+     * Передает компоненту ссылку на родителя
+     * @returns {TwitchService}
+     */
+    #setParentToManager() {
+        if (this.constructor.name === StreamMonitorManager.constructor.name) return;
 
-        this.streamMonitorManager.setParentToManager = this.setParentToManager;
+        this.streamMonitorManager.setParentToManager = this.#setParentToManager;
         this.streamMonitorManager.setParentToManager();
         this.streamMonitorManager.twitchService = this;
         delete this.streamMonitorManager.setParentToManager;
