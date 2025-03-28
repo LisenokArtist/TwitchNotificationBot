@@ -186,4 +186,12 @@ describe('Uncategored', function () {
         const map = new Map();
         return map;
     })
+    it('foreach', () => {
+        const arr = [0, 1, 2, 3, 4, 5];
+
+        arr.forEach(x => {
+            if (x === 3) return;
+            console.log(x);
+        })
+    })
 })
