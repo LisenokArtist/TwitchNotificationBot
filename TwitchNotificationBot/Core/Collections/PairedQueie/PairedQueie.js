@@ -1,25 +1,49 @@
 const { KeyValuePair } = require('../KeyValuePair');
 
+//Хз как это назвать
 const PairedQueie = class PairedQueie {
     constructor() {
+        /** @type {KeyValuePair[]} */
         this.collection = new Array();
     }
 
     /**
-     * Добавляет элемент в коллекцию
-     * @param {KeyValuePair} item
+     * Добавляет элементы в коллекцию
+     * @param {KeyValuePair[]} items
      */
-    push(item) {
-        if (item.constructor.name != KeyValuePair.constructor.name) {
-            throw new Error('Param is not a KeyValuePair element');
+    pushes(items) {
+        if (!Array.isArray(items)) {
+            throw new Error('Param is not a array');
         }
 
-        this.collection.push(item);
+        if (items.some(x => x.constructor.name != KeyValuePair.constructor.name)) {
+            throw new Error('One of param is not a KeyValuePair element');
+        }
+
+        this.collection.push(items);
+    }
+
+    /**
+     * Обновляет элемент коллекции
+     * @param {number} index
+     * @param {KeyValuePair} item
+     */
+    update(index, item) {
+        if (index.constructor.name != Number.constructor.name) {
+            throw new Error('Param index is not a number');
+        }
+
+        if (item.constructor.name != KeyValuePair.constructor.name) {
+            throw new Error('Param item is not a KeyValuePair');
+        }
+
+        this.collection[index] = item;
     }
 
     /**
      * Находит индекс первого элемента
      * @param {(obj: KeyValuePair, index: number, array: KeyValuePair[])} predicate
+     * @returns {number}
      */
     findIndex(predicate) {
         return this.collection.findIndex(predicate);
