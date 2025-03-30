@@ -101,8 +101,9 @@ class TelegramConfig {
 }
 
 class NotificationConfig {
-    constructor(channels, discordChannelId, telegramChannelId) {
+    constructor(channels, discordGuildId, discordChannelId, telegramChannelId) {
         this.twitchMonitorChannelNames = channels;
+        this.discordGuildId = discordGuildId;
         this.discordRespondChannelId = discordChannelId;
         this.telegramRespondChannelId = telegramChannelId;
     }
