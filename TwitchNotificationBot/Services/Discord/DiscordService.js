@@ -10,6 +10,8 @@ const { Routes } = require('discord.js');
 const { DiscordConfig } = require('../../Core/AppConfig');
 const { InteractionCommand } = require('../../Core/InteractionCommand');
 const { ServiceBase } = require('../ServiceBase');
+const { Guild } = require('../../node_modules/discord.js/src/structures/Guild');
+const TextChannel = require('../../node_modules/discord.js/src/structures/TextChannel');
 
 class DiscordService extends ServiceBase {
     /** @param {DiscordConfig} config */
@@ -17,22 +19,53 @@ class DiscordService extends ServiceBase {
         super();
         /** @type {String} */
         this.token = config.token;
-
         /** @type {DiscordConfig} */
         this.config = config;
 
         var bits = new IntentsBitField();
         bits.add(32767);
-
         this.client = new Client({
             intents: bits,
             partials: [Partials.Message, Partials.Channel, Partials.Reaction],
         });
-        
+
+        /** @type {TextChannel} */
+        this.respondChannel = undefined;
 
         this.commands = this.#loadCommandCollection();
         this.#registerCommands(this.commands);
         this.#registerEvents();
+    }
+
+    /**
+     * Обновляет канал куда отправлять уведомления
+     * @param {number} guildId
+     * @param {number} channelId
+     */
+    async #updateRespondChannel(guildId, channelId) {
+        /** @type {Guild}*/
+        const guild = await this.client.guilds.fetch(guildId);
+        if (!guild) throw new Error('GuildId is not available or not set');
+
+        /** @type {TextChannel}*/
+        const channel = guild.channels.fetch(channelId);
+        if (!channel) throw new Error('ChannelId is not avialable or not set');
+
+        this.respondChannel = channel;
+    }
+
+    /**
+     * Получает канал.
+     * @param {number} guildId
+     * @param {number} channelId
+     * @returns {TextChannel}
+     */
+    async getRespondChannel(guildId, channelId) {
+        if (!this.respondChannel | this.respondChannel.guildId != guildId | this.respondChannel.id != channelId) {
+            await this.#updateRespondChannel(guildId, channelId);
+        }
+
+        return this.respondChannel;
     }
 
     /**
