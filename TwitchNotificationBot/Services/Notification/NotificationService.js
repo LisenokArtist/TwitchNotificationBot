@@ -10,6 +10,8 @@ const { Dictionary } = require('../../Core/Collections/Dictionary/Dictionary');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
 const { resolve } = require('../../node_modules/discord.js/src/util/ActivityFlagsBitField');
 const { PairedQueie } = require('../../Core/Collections/PairedQueie/PairedQueie');
+const EmbedBuilder = require('../../node_modules/discord.js/src/structures/EmbedBuilder');
+const User = require('../../node_modules/discord.js/src/structures/User');
 
 class NotificationService extends ServiceBase {
 
@@ -19,6 +21,8 @@ class NotificationService extends ServiceBase {
 
         /** @type {String[]} */
         this.twitchChannelNames = config.twitchMonitorChannelNames;
+        /** @type {Number} */
+        this.discordGuildId = config.discordGuildId;
         /** @type {Number} */
         this.discordChannelId = config.discordRespondChannelId;
         /** @type {Number} */
@@ -163,7 +167,7 @@ class NotificationService extends ServiceBase {
      * @param {StreamResponse[]} streams
      */
     #addToQueie(type, target, streams) {
-        this.queie.pushes(streams.map(x => new NotificationRespond(type, target, x)));
+        this.queie.pushes(streams.map(x => new KeyValuePair(target, new NotificationRespond(type, target, x))));
     }
 
     /**
@@ -190,13 +194,133 @@ class NotificationService extends ServiceBase {
     #onTimerCallback() {
         try {
             do {
-                // заглушка
+                let result = false;
+
+                const item = this.queie.collection[0];
+                switch (item.key) {
+                    case NotificationRespondProvider.ToDiscord:
+                        result = this.#respondToDiscord(item.value);
+                        break;
+                    case NotificationRespondProvider.ToTelegram:
+                        result = this.#respondToTelegram(item.value);
+                        break;
+                }
+
+                if (result) {
+                    this.queie.collection.shift();
+                } else {
+                    throw new Error('Respond not passed');
+                }
             } while (this.queie.collection.length > 0);
         }
         catch (e) {
             console.log(`Notification responds paused with error:${e}`);
             this.#tryStartTimer();
         }
+    }
+
+    /**
+     * Отправляет сообщение в Discord
+     * @param {NotificationRespond} arg
+     * @returns
+     */
+    async #respondToDiscord(arg) {
+        /** @type {TwitchNotificationBot} */
+        const app = this.parent;
+        /** @type {DiscordService}*/
+        const discord = app.services.find(x => x.constructor.name === DiscordService.constructor.name);
+
+        if (discord) {
+            try {
+                const channel = await discord.getRespondChannel(this.discordGuildId, this.discordChannelId);
+                
+                switch (arg.type) {
+                    case NotificationTypeProvider.Started: {
+                        channel.send({
+                            content: arg.type,
+                            embeds: [this.#buildEmbedMessage(
+                                arg.stream,
+                                discord.client.user)]
+                        });
+                        break;
+                    }
+                    case NotificationTypeProvider.Updated: {
+                        //Требуется придумать как обновлять сообщение, которое было ранее отправлено
+                        break;
+                    }
+                    case NotificationTypeProvider.Ended: {
+                        channel.send({
+                            content: arg.type,
+                            embeds: [this.#buildEmbedMessage(
+                                arg.stream
+                            )]
+                        })
+                        break;
+                    }
+                }
+
+                return true;
+            } catch (e) {
+                console.log(`Respond to Discord error: ${e}`);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * https://discordjs.guide/popular-topics/embeds.html#using-the-embed-constructor
+     * @param {StreamResponse} stream Стрим с твича
+     * @param {User|undefined} discordUser Если указано, добавляет ссылку на пользователя Discord
+     * @param {any|undefined} twitchGame Если указано, добавляет название и обложку игры
+     * @param {EmbedField[]|undefined} embedFields Если указано, добавляет строки на каждое поле
+     */
+    #buildEmbedMessage(stream, discordUser, twitchGame, embedFields) {
+        return new EmbedBuilder({
+            title: stream.title,
+            url: `https://www.twitch.tv/${stream.user_login}`,
+            image: {
+                url: stream.thumbnail_url.replace('{width}', 400).replace('{height}', 220)
+            },
+
+            ...discordUser && {
+                author: {
+                    name: discordUser.displayName,
+                    icon_url: discordUser.avatarURL(),
+                    url: discordUser.tag
+                }
+            },
+
+            ...twitchGame && { description: twitchGame.game_name },
+            ...twitchGame && { thumbnail: { url: stream.thumbnail_url } },
+            
+            ...embedFields && { fields: [embedFields] }
+        });
+    }
+
+    /**
+     * Отправляет сообщение в Telegram
+     * @param {NotificationRespond} arg
+     * @returns
+     */
+    async #respondToTelegram(arg) {
+        return false;
+    }
+}
+
+/**
+ * @param {string} name
+ * @param {string} value
+ * @param {boolean|undefined} inline
+ */
+const EmbedField = function EmbedField(name, value, inline) {
+    /** @type {string} */
+    this.name = name;
+    /** @type {string} */
+    this.value = value;
+    if (inline) {
+        /** @type {boolean} */
+        this.inline = inline;
     }
 }
 
