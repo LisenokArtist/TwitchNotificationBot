@@ -45,9 +45,10 @@ const TwitchService = class TwitchService extends ServiceBase {
 
     /**
      * Задает список каналов к мониторингу по имени
-     * @param {String[]} names Список названий каналов
+     * @param {String[]} channels Список названий каналов
      */
     setChannelsByName(channels) {
+        if (channels.length > 20) throw new Error('More then 20 values not supported');
         this.streamMonitorManager.setChannelsByName(channels);
     }
 
