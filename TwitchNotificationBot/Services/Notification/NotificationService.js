@@ -39,6 +39,7 @@ class NotificationService extends ServiceBase {
         /** @type {Dictionary}*/
         this.toDiscordNotificationQueie = new Dictionary();
 
+        /** @type {NodeJS.Timeout|null}*/
         this.timer = null;
         /** @type {Boolean} */
         this.isEventsRegistered = false;
@@ -102,7 +103,8 @@ class NotificationService extends ServiceBase {
     /** @param {TwitchService} twitch */
     #registerTwitchEvents(twitch) {
         twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamStarted));
-        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamUpdated));
+        //—обытие по обновлению стримов оставим на потом. Ќужно будет добавить возможность обновл€ть отправл€емую запись в чат.
+        //twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamUpdated));
         twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded,   e => this.#onStream(e, StreamMonitorEventProvider.OnStreamEnded));
     }
 
@@ -177,7 +179,7 @@ class NotificationService extends ServiceBase {
     #tryStartTimer() {
         const isEmpty = !this.queie.collection.length > 0;
 
-        if (isEmpty && !this.timer) {
+        if (!isEmpty && !this.timer) {
             this.timer = setTimeout(() => {
                 clearTimeout(this.timer);
                 this.timer = null;
@@ -185,6 +187,22 @@ class NotificationService extends ServiceBase {
             }, this.retryInSeconds * 1000);
             return true;
         }
+        return false;
+    }
+
+
+    /**
+     * ќстанавливает таймер обновлени€
+     * @returns {boolean} True если остановка была успешна
+     */
+    #tryStopTimer() {
+        const isEmpty = !this.queie.collection.length > 0;
+
+        if (isEmpty && this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+            return true;
+        };
         return false;
     }
 
@@ -212,6 +230,7 @@ class NotificationService extends ServiceBase {
                     throw new Error('Respond not passed');
                 }
             } while (this.queie.collection.length > 0);
+            this.#tryStopTimer();
         }
         catch (e) {
             console.log(`Notification responds paused with error:${e}`);
