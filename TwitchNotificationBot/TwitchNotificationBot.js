@@ -20,6 +20,25 @@ class TwitchNotificationBot {
 
         /** @type {Boolean} */
         this.isRunning = false;
+
+        this.setParentToServices();
+    }
+
+    /** @type {TwitchService} */
+    get TwitchService() {
+        return this.#getService(TwitchService.constructor.name);
+    }
+    /** @type {DiscordService} */
+    get DiscordService() {
+        return this.#getService(DiscordService.constructor.name);
+    }
+    /** @type {TelegramService} */
+    get TelegramService() {
+        return this.#getService(TelegramService.constructor.name);
+    }
+    /** @type {NotificationService} */
+    get NotificationService() {
+        return this.#getService(NotificationService.constructor.name);
     }
 
     setParentToServices() {
@@ -30,6 +49,16 @@ class TwitchNotificationBot {
             delete this.services[i].setParentToServices;
         }
         return this;
+    }
+
+    /**
+     * Возвращает сервис по имени
+     * @param {any} serviceName Назвение класса сервиса
+     * @returns {ServiceBase|undefined} Сервис если такой существует или undefined
+     */
+    #getService(serviceName) {
+        const service = this.services.find(x => x.constructor.name === serviceName);
+        return this.services.find(x => x.constructor.name === serviceName);
     }
 
     async Start() {
@@ -51,4 +80,4 @@ class TwitchNotificationBot {
     }
 }
 
-module.exports = TwitchNotificationBot;
+module.exports = { TwitchNotificationBot };
