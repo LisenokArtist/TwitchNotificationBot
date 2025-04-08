@@ -1,4 +1,4 @@
-const { KeyValuePair } = require('./Collections/KeyValuePair');
+const { KeyValuePair } = require('../KeyValuePair');
 
 /** ¬озможно эта структура больше не понадобитс€ */
 const Dictionary = class Dictionary {
