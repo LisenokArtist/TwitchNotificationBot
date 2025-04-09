@@ -46,6 +46,9 @@ class NotificationService extends ServiceBase {
     }
 
     async Start() {
+        // Пропускаем инициализацию
+        this.isInitializated = true;
+
         if (!this.isEventsRegistered) {
             await this.#retriveServicesAndRegisterEvents();
         }

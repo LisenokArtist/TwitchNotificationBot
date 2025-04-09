@@ -22,19 +22,7 @@ class DiscordService extends ServiceBase {
         /** @type {DiscordConfig} */
         this.config = config;
 
-        var bits = new IntentsBitField();
-        bits.add(32767);
-        this.client = new Client({
-            intents: bits,
-            partials: [Partials.Message, Partials.Channel, Partials.Reaction],
-        });
 
-        /** @type {TextChannel} */
-        this.respondChannel = undefined;
-
-        this.commands = this.#loadCommandCollection();
-        this.#registerCommands(this.commands);
-        this.#registerEvents();
     }
 
     /**
@@ -174,7 +162,27 @@ class DiscordService extends ServiceBase {
         console.log('Is on ready');
     }
 
+    async Init() {
+        var bits = new IntentsBitField();
+        bits.add(32767);
+        this.client = new Client({
+            intents: bits,
+            partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+        });
+
+        /** @type {TextChannel} */
+        this.respondChannel = undefined;
+
+        this.commands = this.#loadCommandCollection();
+        await this.#registerCommands(this.commands);
+        this.#registerEvents();
+
+        this.isInitializated = true;
+    }
+
     async Start() {
+        if (!this.isInitializated) this.Init();
+
         try {
             if (this.client.isReady() === false) {
                 this.client.login(this.config.token);

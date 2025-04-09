@@ -24,6 +24,8 @@ const TelegramService = class TelegramService extends ServiceBase {
     }
 
     async Start() {
+        // Пропускаем инициализацию
+        this.isInitializated = true;
         console.log('TelegramServise is not require to start');
     }
     async Stop() {
