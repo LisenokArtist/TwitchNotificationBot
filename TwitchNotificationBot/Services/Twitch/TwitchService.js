@@ -24,18 +24,33 @@ const TwitchService = class TwitchService extends ServiceBase {
         /** @type {AuthToken} */
         this.authToken;
 
-        this.streamMonitorManager = new StreamMonitorManager(this, 60);
-        this.#setParentToManager();
+        this.streamMonitorManager = new StreamMonitorManager(60);
+
+        this.setParent();
+    }
+
+    setParent() {
+        for (var property in this) {
+            const pass = this[property] instanceof StreamMonitorManager;
+            if (pass) {
+                this[property].setParent = this.setParent;
+                this[property].setParent();
+                this[property].twitchService = this;
+                delete this[property].setParent;
+            }
+        }
+
+        return this;
     }
 
     /**
      * Передает компоненту ссылку на родителя
      * @returns {TwitchService}
      */
-    #setParentToManager() {
+    setParentToManager() {
         if (this.constructor.name === StreamMonitorManager.constructor.name) return;
 
-        this.streamMonitorManager.setParentToManager = this.#setParentToManager;
+        this.streamMonitorManager.setParentToManager = this.setParentToManager;
         this.streamMonitorManager.setParentToManager();
         this.streamMonitorManager.twitchService = this;
         delete this.streamMonitorManager.setParentToManager;
@@ -212,6 +227,9 @@ const TwitchService = class TwitchService extends ServiceBase {
 
     /** Запускает работу сервиса */
     async Start() {
+        //Пропускаем инициализацию
+        this.isInitializated = true;
+
         await this.#updateTokenAsync();
         this.streamMonitorManager.startTimer();
     }
@@ -266,6 +284,11 @@ const TwitchService = class TwitchService extends ServiceBase {
 
         } 
         return null;
+    }
+
+    /** Для юнит-тестов */
+    async TestUpdateTokenAsync() {
+        return await this.#updateTokenAsync();
     }
 }
 
