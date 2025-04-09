@@ -2,7 +2,10 @@
 const { AppConfig, DiscordConfig, TwitchConfig } = require('../Core/AppConfig');
 const { TwitchService } = require('../Services/Twitch/TwitchService');
 const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitorManager');
-const { DiscordService } = require('../Services/Discord/DiscordService');
+//const { DiscordService } = require('../Services/Discord/DiscordService');
+/*const { NotificationService } = require('../Services/Notification/NotificationService');*/
+//const { StreamResponse } = require('../Core/Twitch/TwitchApiModels');
+const { TwitchNotificationBot } = require('../TwitchNotificationBot');
 
 
 describe('AppConfig', function () {
@@ -50,7 +53,7 @@ describe('TwitchService', function () {
         config.load();
         const service = new TwitchService(config.twitchConfig);
         await service.Start();
-        const streams = await service.getStreams(['cinema2u']);
+        const streams = await service.getStreams();
         console.log(streams);
         return streams;
     });
@@ -100,6 +103,18 @@ describe('TwitchService', function () {
         await promise.then(x => console.log(x)).catch(x => console.log(x));
     }).timeout(50000);
 });
+
+describe('NotificationService', function (){
+    it('Stream started (discord)', async function () {
+        const appConfig = new AppConfig();
+        appConfig.load();
+        const app = new TwitchNotificationBot(appConfig);
+        await app.twitchService.Start();
+        const streams = await app.twitchService.getStreams();
+        
+        console.log(streams.map(x => x.title).join('\n'));
+    })
+})
 
 describe('Uncategored', function () {
     it('Date', function () {
