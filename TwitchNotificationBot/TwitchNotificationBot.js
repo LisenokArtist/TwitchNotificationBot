@@ -24,21 +24,30 @@ class TwitchNotificationBot {
         this.setParentToServices();
     }
 
+    /**
+     * Возвращает сервис по имени
+     * @param {ServiceBase} instance Класс сервиса
+     * @returns {ServiceBase|undefined} Сервис если такой существует или undefined
+     */
+    getService(instance) {
+        return this.services.find(x => x instanceof instance);
+    }
+
     /** @type {TwitchService} */
-    get TwitchService() {
-        return this.#getService(TwitchService.constructor.name);
+    get twitchService() {
+        return this.getService(TwitchService);
     }
     /** @type {DiscordService} */
-    get DiscordService() {
-        return this.#getService(DiscordService.constructor.name);
+    get discordService() {
+        return this.getService(DiscordService);
     }
     /** @type {TelegramService} */
-    get TelegramService() {
-        return this.#getService(TelegramService.constructor.name);
+    get telegramService() {
+        return this.getService(TelegramService);
     }
     /** @type {NotificationService} */
-    get NotificationService() {
-        return this.#getService(NotificationService.constructor.name);
+    get notificationService() {
+        return this.getService(NotificationService);
     }
 
     setParentToServices() {
@@ -51,15 +60,7 @@ class TwitchNotificationBot {
         return this;
     }
 
-    /**
-     * Возвращает сервис по имени
-     * @param {any} serviceName Назвение класса сервиса
-     * @returns {ServiceBase|undefined} Сервис если такой существует или undefined
-     */
-    #getService(serviceName) {
-        const service = this.services.find(x => x.constructor.name === serviceName);
-        return this.services.find(x => x.constructor.name === serviceName);
-    }
+
 
     async Start() {
         try {
