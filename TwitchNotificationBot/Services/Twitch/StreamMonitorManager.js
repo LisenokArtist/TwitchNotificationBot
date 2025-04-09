@@ -8,11 +8,11 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
      * @param {TwitchService} twitchService Основной модуль, которому принадлежит менеджер
      * @param {Number} checkIntervalInSeconds Как часто будет вызываться метод проверки стримов в секундах
      */
-    constructor(twitchService, checkIntervalInSeconds) {
+    constructor(checkIntervalInSeconds) {
         super();
 
         /** @type { TwitchService } */
-        this.twitchService = twitchService;
+        this.twitchService;
         /** @type { Number } */
         this.checkIntervalInSeconds = checkIntervalInSeconds;
 
