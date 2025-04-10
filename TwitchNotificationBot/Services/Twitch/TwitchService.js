@@ -98,23 +98,23 @@ const TwitchService = class TwitchService extends ServiceBase {
         return false;
     }
 
-
     /**
      * Получает новый токен авторизации
      * @returns {TokenResponse}
      */
     async #getNewTokenAsync() {
-        const data = {
-            client_id: this.clientId,
-            client_secret: this.secretId,
-        }
         const endPoint = 'https://id.twitch.tv/oauth2/token';
         const options = {
             headers: {
                 "Content-Type": "application/json"
             },
             method: "POST",
-            body: JSON.stringify(data)
+            body: JSON.stringify({
+                client_id: this.clientId,
+                client_secret: this.secretId,
+                grant_type: "client_credentials",
+                scope: this.scopes?.join(" ")
+            })
         }
         const response = await fetch(endPoint, options);
         const result = await response.text();
@@ -124,16 +124,10 @@ const TwitchService = class TwitchService extends ServiceBase {
             this.#error(e);
             return undefined;
         }
-        //const url = `https://id.twitch.tv/oauth2/token?client_id=${this.clientId}&client_secret=${this.secretId}&grant_type=client_credentials`;
-        //const options = {
-        //    headers: {
-        //        "Content-Type": "application/x-www-form-urlencoded"
-        //    },
-        //    method: "POST"
-        //}
+    }
 
-        //const response = await fetch(url, options);
-        //return await response.json();
+    async getNewTokenAsyncTest() {
+        return await this.#getNewTokenAsync();
     }
 
     async #refresh() {
