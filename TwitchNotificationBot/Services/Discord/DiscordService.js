@@ -21,8 +21,8 @@ class DiscordService extends ServiceBase {
         this.token = config.token;
         /** @type {DiscordConfig} */
         this.config = config;
-
-
+        /** @type {TextChannel} */
+        this.respondChannel = undefined;
     }
 
     /**
@@ -36,7 +36,7 @@ class DiscordService extends ServiceBase {
         if (!guild) throw new Error('GuildId is not available or not set');
 
         /** @type {TextChannel}*/
-        const channel = guild.channels.fetch(channelId);
+        const channel = await guild.channels.fetch(channelId);
         if (!channel) throw new Error('ChannelId is not avialable or not set');
 
         this.respondChannel = channel;
@@ -49,7 +49,7 @@ class DiscordService extends ServiceBase {
      * @returns {TextChannel}
      */
     async getRespondChannel(guildId, channelId) {
-        if (!this.respondChannel | this.respondChannel.guildId != guildId | this.respondChannel.id != channelId) {
+        if (!this.respondChannel | this.respondChannel?.guildId != guildId | this.respondChannel?.id != channelId) {
             await this.#updateRespondChannel(guildId, channelId);
         }
 
@@ -169,9 +169,6 @@ class DiscordService extends ServiceBase {
             intents: bits,
             partials: [Partials.Message, Partials.Channel, Partials.Reaction],
         });
-
-        /** @type {TextChannel} */
-        this.respondChannel = undefined;
 
         this.commands = this.#loadCommandCollection();
         await this.#registerCommands(this.commands);
