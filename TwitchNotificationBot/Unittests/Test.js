@@ -6,7 +6,7 @@ const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitor
 /*const { NotificationService } = require('../Services/Notification/NotificationService');*/
 //const { StreamResponse } = require('../Core/Twitch/TwitchApiModels');
 const { TwitchNotificationBot } = require('../TwitchNotificationBot');
-
+const { NotificationTypeProvider } = require('../Services/Notification/NotificationService');
 
 describe('AppConfig', function () {
     it('Generate empty app file config', function () {
@@ -40,11 +40,11 @@ describe('GiveRoleOnReactionSettings', function () {
 });
 
 describe('TwitchService', function () {
-    it('GetToken', async function () {
+    it('GetTokenOrNew', async function () {
         const config = new AppConfig();
         config.load();
         const service = new TwitchService(config.twitchConfig);
-        const result = await service.getNewToken();
+        const result = await service.getNewTokenAsyncTest();
         console.log(result);
         return result;
     });
@@ -104,15 +104,35 @@ describe('TwitchService', function () {
     }).timeout(50000);
 });
 
-describe('NotificationService', function (){
+describe('NotificationService', function () {
     it('Stream started (discord)', async function () {
         const appConfig = new AppConfig();
         appConfig.load();
         const app = new TwitchNotificationBot(appConfig);
         await app.twitchService.Start();
         const streams = await app.twitchService.getStreams();
-        
-        console.log(streams.map(x => x.title).join('\n'));
+        const stream = streams[0];
+        await app.discordService.Start();
+        await app.notificationService.Start();
+        await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, stream);
+    })
+});
+
+describe('Discord', function () {
+    it('getRespondChannel', async function () {
+        const appConfig = new AppConfig();
+        appConfig.load();
+        const app = new TwitchNotificationBot(appConfig);
+        await app.discordService.Start();
+        await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, {
+            title: "title",
+            url: "https://www.google.ru/",
+            thumbnail_url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+            image: {
+                url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
+            },
+
+        });
     })
 })
 
