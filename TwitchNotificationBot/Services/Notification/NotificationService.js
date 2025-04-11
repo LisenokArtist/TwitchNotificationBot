@@ -1,4 +1,4 @@
-const TwitchNotificationBot = require('../../TwitchNotificationBot');
+const { TwitchNotificationBot } = require('../../TwitchNotificationBot');
 const { ServiceBase } = require('../ServiceBase');
 const { TwitchService } = require('../Twitch/TwitchService');
 const { DiscordService } = require('../Discord/DiscordService');
@@ -250,7 +250,7 @@ class NotificationService extends ServiceBase {
         /** @type {TwitchNotificationBot} */
         const app = this.parent;
         /** @type {DiscordService}*/
-        const discord = app.services.find(x => x.constructor.name === DiscordService.constructor.name);
+        const discord = app.getService(DiscordService);
 
         if (discord) {
             try {
@@ -288,6 +288,15 @@ class NotificationService extends ServiceBase {
         }
 
         return false;
+    }
+
+    /**
+     * @param {NotificationTypeProvider} type
+     * @param {StreamResponse} stream
+     */
+    async respondToDiscordAsyncTest(type, stream) {
+        const arg = new NotificationRespond(type, NotificationRespondProvider.ToDiscord, stream)
+        await this.#respondToDiscord(arg);
     }
 
     /**
@@ -380,4 +389,4 @@ const NotificationEventProvider = {
     OnStreamEnded: StreamMonitorEventProvider.OnStreamEnded
 }
 
-module.exports = { NotificationService, NotificationRespond, NotificationEventProvider }
+module.exports = { NotificationService, NotificationRespond, NotificationRespondProvider, NotificationTypeProvider, NotificationEventProvider }
