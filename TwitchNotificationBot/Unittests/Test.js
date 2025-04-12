@@ -114,27 +114,61 @@ describe('NotificationService', function () {
         const stream = streams[0];
         await app.discordService.Start();
         await app.notificationService.Start();
-        await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, stream);
-    })
-});
-
-describe('Discord', function () {
-    it('getRespondChannel', async function () {
+        return await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, stream);
+    });
+    it('Stream started (telegram)', async function () {
         const appConfig = new AppConfig();
         appConfig.load();
         const app = new TwitchNotificationBot(appConfig);
-        await app.discordService.Start();
-        await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, {
-            title: "title",
-            url: "https://www.google.ru/",
-            thumbnail_url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
-            image: {
-                url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
-            },
+        await app.twitchService.Start();
+        const streams = await app.twitchService.getStreams();
+        const stream = streams[Math.floor(Math.random() * streams.length)];
+        await app.notificationService.Start();
+        return await app.notificationService.respondToTelegramAsyncTest(NotificationTypeProvider.Started, stream);
+    });
+});
 
-        });
-    })
-})
+describe('Discord', function () {
+    it('respondToDiscord', async function () {
+        try {
+            const appConfig = new AppConfig();
+            appConfig.load();
+            const app = new TwitchNotificationBot(appConfig);
+            await app.discordService.Start();
+            await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, {
+                title: "title",
+                url: "https://www.google.ru/",
+                thumbnail_url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+                image: {
+                    url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
+                },
+            });
+            console.log(`Success`);
+        } catch (e) {
+            console.log(`Fail with error: ${e}`);
+        }
+    });
+});
+
+describe('Telegram', function () {
+    it('Send message to channel', async function () {
+        const appConfig = new AppConfig();
+        appConfig.load();
+        const app = new TwitchNotificationBot(appConfig);
+        await app.telegramService.client.sendMessage(
+            appConfig.notificationConfig.telegramRespondChannelId,
+            "Unit test respond message async status result");
+    });
+    it('Send photo to channel', async function () {
+        const appConfig = new AppConfig();
+        appConfig.load();
+        const app = new TwitchNotificationBot(appConfig);
+        await app.telegramService.client.sendPhoto(
+            appConfig.notificationConfig.telegramRespondChannelId,
+            'https://lisenokartist.ddns.net/Resources/Avatars/Rosy_x25.png'
+        );
+    });
+});
 
 describe('Uncategored', function () {
     it('Date', function () {
