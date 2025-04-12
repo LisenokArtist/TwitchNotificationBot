@@ -57,7 +57,7 @@ class NotificationService extends ServiceBase {
     }
 
     async Start() {
-        // Пропускаем инициализацию
+        // РџСЂРѕРїСѓСЃРєР°РµРј РёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ
         this.isInitializated = true;
 
         if (!this.isEventsRegistered) {
@@ -69,7 +69,7 @@ class NotificationService extends ServiceBase {
         console.log('NotificationService is not require to stop');
     }
 
-    /** Извлекает сервисы и регистрирует события */
+    /** РР·РІР»РµРєР°РµС‚ СЃРµСЂРІРёСЃС‹ Рё СЂРµРіРёСЃС‚СЂРёСЂСѓРµС‚ СЃРѕР±С‹С‚РёСЏ */
     async #retriveServicesAndRegisterEvents() {
         /** @type {TwitchNotificationBot}*/
         const base = this.parent;
@@ -96,7 +96,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Регистрирует настройки
+     * Р РµРіРёСЃС‚СЂРёСЂСѓРµС‚ РЅР°СЃС‚СЂРѕР№РєРё
      * @param {TwitchService} twitch
      */
     #registerSettings(twitch) {
@@ -104,26 +104,26 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Регистрирует события
+     * Р РµРіРёСЃС‚СЂРёСЂСѓРµС‚ СЃРѕР±С‹С‚РёСЏ
      * @param {TwitchService} twitch
      * @param {DiscordService} discord
      * @param {TelegramService} telegram
      */
     #registerEvents(twitch, discord, telegram) {
         this.#registerTwitchEvents(twitch);
-        // Для остального пока-что заглушки
+        // Р”Р»СЏ РѕСЃС‚Р°Р»СЊРЅРѕРіРѕ РїРѕРєР°-С‡С‚Рѕ Р·Р°РіР»СѓС€РєРё
     }
 
     /** @param {TwitchService} twitch */
     #registerTwitchEvents(twitch) {
         twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamStarted));
-        //Событие по обновлению стримов оставим на потом. Нужно будет добавить возможность обновлять отправляемую запись в чат.
+        //РЎРѕР±С‹С‚РёРµ РїРѕ РѕР±РЅРѕРІР»РµРЅРёСЋ СЃС‚СЂРёРјРѕРІ РѕСЃС‚Р°РІРёРј РЅР° РїРѕС‚РѕРј. РќСѓР¶РЅРѕ Р±СѓРґРµС‚ РґРѕР±Р°РІРёС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РѕР±РЅРѕРІР»СЏС‚СЊ РѕС‚РїСЂР°РІР»СЏРµРјСѓСЋ Р·Р°РїРёСЃСЊ РІ С‡Р°С‚.
         //twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamUpdated));
         twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded,   e => this.#onStream(e, StreamMonitorEventProvider.OnStreamEnded));
     }
 
     /**
-     * Срабатывает если статус стрима изменен
+     * РЎСЂР°Р±Р°С‚С‹РІР°РµС‚ РµСЃР»Рё СЃС‚Р°С‚СѓСЃ СЃС‚СЂРёРјР° РёР·РјРµРЅРµРЅ
      * @param {OnStreamEventArgs[]} eventArgs
      * @param {StreamMonitorEventProvider} event
      */
@@ -150,7 +150,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Добавляет начатые стримы в очередь
+     * Р”РѕР±Р°РІР»СЏРµС‚ РЅР°С‡Р°С‚С‹Рµ СЃС‚СЂРёРјС‹ РІ РѕС‡РµСЂРµРґСЊ
      * @param {StreamResponse[]} streams
      */
     #streamIsStarted(streams) {
@@ -159,7 +159,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Добавляет обновленные стримы в очередь
+     * Р”РѕР±Р°РІР»СЏРµС‚ РѕР±РЅРѕРІР»РµРЅРЅС‹Рµ СЃС‚СЂРёРјС‹ РІ РѕС‡РµСЂРµРґСЊ
      * @param {StreamResponse[]} streams
      */
     #streamIsUpdated(streams) {
@@ -168,7 +168,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Добавляет завершенные стримы в очередь
+     * Р”РѕР±Р°РІР»СЏРµС‚ Р·Р°РІРµСЂС€РµРЅРЅС‹Рµ СЃС‚СЂРёРјС‹ РІ РѕС‡РµСЂРµРґСЊ
      * @param {StreamResponse[]} streams
      */
     #streamIsEnded(streams) {
@@ -177,7 +177,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Добавляет стримы в очередь
+     * Р”РѕР±Р°РІР»СЏРµС‚ СЃС‚СЂРёРјС‹ РІ РѕС‡РµСЂРµРґСЊ
      * @param {NotificationTypeProvider} type
      * @param {NotificationRespondProvider} target
      * @param {StreamResponse[]} streams
@@ -187,8 +187,8 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Запускает таймер обновления
-     * @returns {Boolean} True если запуск был успешным
+     * Р—Р°РїСѓСЃРєР°РµС‚ С‚Р°Р№РјРµСЂ РѕР±РЅРѕРІР»РµРЅРёСЏ
+     * @returns {Boolean} True РµСЃР»Рё Р·Р°РїСѓСЃРє Р±С‹Р» СѓСЃРїРµС€РЅС‹Рј
      */
     #tryStartTimer() {
         const isEmpty = !this.queie.collection.length > 0;
@@ -206,8 +206,8 @@ class NotificationService extends ServiceBase {
 
 
     /**
-     * Останавливает таймер обновления
-     * @returns {boolean} True если остановка была успешна
+     * РћСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ С‚Р°Р№РјРµСЂ РѕР±РЅРѕРІР»РµРЅРёСЏ
+     * @returns {boolean} True РµСЃР»Рё РѕСЃС‚Р°РЅРѕРІРєР° Р±С‹Р»Р° СѓСЃРїРµС€РЅР°
      */
     #tryStopTimer() {
         const isEmpty = !this.queie.collection.length > 0;
@@ -221,7 +221,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Срабатывает когда таймер отработал свой интервал
+     * РЎСЂР°Р±Р°С‚С‹РІР°РµС‚ РєРѕРіРґР° С‚Р°Р№РјРµСЂ РѕС‚СЂР°Р±РѕС‚Р°Р» СЃРІРѕР№ РёРЅС‚РµСЂРІР°Р»
      */
     #onTimerCallback() {
         try {
@@ -253,7 +253,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Отправляет сообщение в Discord
+     * РћС‚РїСЂР°РІР»СЏРµС‚ СЃРѕРѕР±С‰РµРЅРёРµ РІ Discord
      * @param {NotificationRespond} arg
      * @returns
      */
@@ -278,7 +278,7 @@ class NotificationService extends ServiceBase {
                         break;
                     }
                     case NotificationTypeProvider.Updated: {
-                        //Требуется придумать как обновлять сообщение, которое было ранее отправлено
+                        //РўСЂРµР±СѓРµС‚СЃСЏ РїСЂРёРґСѓРјР°С‚СЊ РєР°Рє РѕР±РЅРѕРІР»СЏС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ, РєРѕС‚РѕСЂРѕРµ Р±С‹Р»Рѕ СЂР°РЅРµРµ РѕС‚РїСЂР°РІР»РµРЅРѕ
                         break;
                     }
                     case NotificationTypeProvider.Ended: {
@@ -312,10 +312,10 @@ class NotificationService extends ServiceBase {
 
     /**
      * https://discordjs.guide/popular-topics/embeds.html#using-the-embed-constructor
-     * @param {StreamResponse} stream Стрим с твича
-     * @param {User|undefined} discordUser Если указано, добавляет ссылку на пользователя Discord
-     * @param {any|undefined} twitchGame Если указано, добавляет название и обложку игры
-     * @param {EmbedField[]|undefined} embedFields Если указано, добавляет строки на каждое поле
+     * @param {StreamResponse} stream РЎС‚СЂРёРј СЃ С‚РІРёС‡Р°
+     * @param {User|undefined} discordUser Р•СЃР»Рё СѓРєР°Р·Р°РЅРѕ, РґРѕР±Р°РІР»СЏРµС‚ СЃСЃС‹Р»РєСѓ РЅР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Discord
+     * @param {any|undefined} twitchGame Р•СЃР»Рё СѓРєР°Р·Р°РЅРѕ, РґРѕР±Р°РІР»СЏРµС‚ РЅР°Р·РІР°РЅРёРµ Рё РѕР±Р»РѕР¶РєСѓ РёРіСЂС‹
+     * @param {EmbedField[]|undefined} embedFields Р•СЃР»Рё СѓРєР°Р·Р°РЅРѕ, РґРѕР±Р°РІР»СЏРµС‚ СЃС‚СЂРѕРєРё РЅР° РєР°Р¶РґРѕРµ РїРѕР»Рµ
      */
     #buildEmbedMessage(stream, discordUser, twitchGame, embedFields) {
         return new EmbedBuilder({
@@ -341,7 +341,7 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Отправляет сообщение в Telegram
+     * РћС‚РїСЂР°РІР»СЏРµС‚ СЃРѕРѕР±С‰РµРЅРёРµ РІ Telegram
      * @param {NotificationRespond} arg
      * @returns
      */
@@ -350,19 +350,20 @@ class NotificationService extends ServiceBase {
         const telegram = this.parent.getService(TelegramService);
         if (telegram) {
             try {
+                const text = this.#pickAnnouncementText(arg.type) ?? "";
                 switch (arg.type) {
                     case NotificationTypeProvider.Started: {
                         await telegram.client.sendPhoto(
                             this.telegramChannelId,
-                            arg.stream.thumbnail_url.replace('{width}', 400).replace('{height}', 220),
-                            this.#buildTelegramOptions(arg.type, arg.stream)
+                            arg.stream.thumbnail_url.replace('{width}', 1024).replace('{height}', 800),
+                            this.#buildTelegramOptions(arg.type, arg.stream, text)
                         )
                         break;
                     }
                     case NotificationTypeProvider.Ended: {
                         await telegram.client.sendMessage(
                             this.telegramChannelId,
-                            this.#pickAnnouncementText(NotificationTypeProvider.Ended))
+                            text)
                         break;
                     }
                 }
@@ -392,16 +393,17 @@ class NotificationService extends ServiceBase {
      * @param {string} descriction
      * @returns
      */
-    #buildTelegramOptions(status, stream, descriction = null) {
+    #buildTelegramOptions(status, stream, descriction = "") {
+        console.log(`descriction: ${descriction}`);
         const options = {
-            show_caption_above_media: false,
+            show_caption_above_media: true,
             parse_mode: 'HTML',
             ...this.telegramRespondThreadId && { message_thread_id: this.telegramRespondThreadId },
-            ...descriction && { caption: descriction },
+            ...descriction?.length > 0 && { caption: descriction },
             ...status === NotificationTypeProvider.Started && {
                 reply_markup: {
                     inline_keyboard: [[{
-                        text: 'Посетить стрим',
+                        text: 'РџРѕСЃРµС‚РёС‚СЊ СЃС‚СЂРёРј',
                         url: `https://www.twitch.tv/${stream.user_login}`,
                     }]]
                 }
@@ -411,15 +413,20 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Взять из коллекции заготовленных ответов случайное сообщение
-     * @param {NotificationTypeProvider} status Статус для которого будет выбрана коллекция
-     * @returns {string|null} Сообщение, если статус соответствует "о начале стрима" или "конец стрима"
+     * Р’Р·СЏС‚СЊ РёР· РєРѕР»Р»РµРєС†РёРё Р·Р°РіРѕС‚РѕРІР»РµРЅРЅС‹С… РѕС‚РІРµС‚РѕРІ СЃР»СѓС‡Р°Р№РЅРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ
+     * @param {NotificationTypeProvider} status РЎС‚Р°С‚СѓСЃ РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ Р±СѓРґРµС‚ РІС‹Р±СЂР°РЅР° РєРѕР»Р»РµРєС†РёСЏ
+     * @returns {string|null} РЎРѕРѕР±С‰РµРЅРёРµ, РµСЃР»Рё СЃС‚Р°С‚СѓСЃ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ "Рѕ РЅР°С‡Р°Р»Рµ СЃС‚СЂРёРјР°" РёР»Рё "РєРѕРЅРµС† СЃС‚СЂРёРјР°"
      */
     #pickAnnouncementText(status) {
-        return
-            status === NotificationTypeProvider.Started ? this.messagesStartAnnouncement :
-            status === NotificationTypeProvider.Ended ? this.messagesEndAnnouncement :
+        const getRandomItem = arr => arr[Math.floor(Math.random() * arr.length)];
+        const result =
+            status === NotificationTypeProvider.Started ? getRandomItem(this.messagesStartAnnouncement) :
+            status === NotificationTypeProvider.Ended ? getRandomItem(this.messagesEndAnnouncement) :
             null;
+        return result;//arr[Math.floor(Math.random() * arr.length)];
+    }
+    pickAnnouncementTextTest(status) {
+        return this.#pickAnnouncementText(status);
     }
 }
 
@@ -441,10 +448,10 @@ const EmbedField = function EmbedField(name, value, inline) {
 
 const NotificationRespond = class NotificationRespond {
     /**
-     * Создает EventArgs класс для событий уведомлений статуса стрима
-     * @param {NotificationTypeProvider} type Тип события
-     * @param {NotificationRespondProvider} respondTo Событие, ориентируемое на что-то
-     * @param {StreamResponse} stream Данные о стриме
+     * РЎРѕР·РґР°РµС‚ EventArgs РєР»Р°СЃСЃ РґР»СЏ СЃРѕР±С‹С‚РёР№ СѓРІРµРґРѕРјР»РµРЅРёР№ СЃС‚Р°С‚СѓСЃР° СЃС‚СЂРёРјР°
+     * @param {NotificationTypeProvider} type РўРёРї СЃРѕР±С‹С‚РёСЏ
+     * @param {NotificationRespondProvider} respondTo РЎРѕР±С‹С‚РёРµ, РѕСЂРёРµРЅС‚РёСЂСѓРµРјРѕРµ РЅР° С‡С‚Рѕ-С‚Рѕ
+     * @param {StreamResponse} stream Р”Р°РЅРЅС‹Рµ Рѕ СЃС‚СЂРёРјРµ
      */
     constructor(type, respondTo, stream) {
         /** @type {NotificationTypeProvider} */
