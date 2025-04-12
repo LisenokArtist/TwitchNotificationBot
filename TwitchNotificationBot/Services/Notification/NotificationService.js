@@ -21,12 +21,23 @@ class NotificationService extends ServiceBase {
 
         /** @type {String[]} */
         this.twitchChannelNames = config.twitchMonitorChannelNames;
+
         /** @type {Number} */
         this.discordGuildId = config.discordGuildId;
         /** @type {Number} */
         this.discordChannelId = config.discordRespondChannelId;
+
         /** @type {Number} */
         this.telegramChannelId = config.telegramRespondChannelId;
+        /** @type {number|null} */
+        this.telegramRespondThreadId = config.telegramRespondThreadId;
+
+        /** @type {string[]} */
+        this.messagesStartAnnouncement = config.messagesStartAnnouncement;
+        /** @type {string[]} */
+        this.messagesEndAnnouncement = config.messagesEndAnnouncement;
+
+
 
         /** @type {Number} */
         this.retryInSeconds = 60;
@@ -335,7 +346,80 @@ class NotificationService extends ServiceBase {
      * @returns
      */
     async #respondToTelegram(arg) {
+        /** @type {TelegramService} */
+        const telegram = this.parent.getService(TelegramService);
+        if (telegram) {
+            try {
+                switch (arg.type) {
+                    case NotificationTypeProvider.Started: {
+                        await telegram.client.sendPhoto(
+                            this.telegramChannelId,
+                            arg.stream.thumbnail_url.replace('{width}', 400).replace('{height}', 220),
+                            this.#buildTelegramOptions(arg.type, arg.stream)
+                        )
+                        break;
+                    }
+                    case NotificationTypeProvider.Ended: {
+                        await telegram.client.sendMessage(
+                            this.telegramChannelId,
+                            this.#pickAnnouncementText(NotificationTypeProvider.Ended))
+                        break;
+                    }
+                }
+                return true;
+            } catch (e) {
+                console.log(`Respond to Telegram error: ${e}`);
+            }
+        }
+
         return false;
+    }
+
+    /**
+     * @param {NotificationTypeProvider} type
+     * @param {StreamResponse} stream
+     */
+    async respondToTelegramAsyncTest(type, stream) {
+        const arg = new NotificationRespond(type, NotificationRespondProvider.ToTelegram, stream);
+        await this.#respondToTelegram(arg);
+    }
+
+    /**
+     * 
+     * @param {NotificationTypeProvider} status
+     * @param {StreamResponse} stream
+     * @param {any} photo
+     * @param {string} descriction
+     * @returns
+     */
+    #buildTelegramOptions(status, stream, descriction = null) {
+        const options = {
+            show_caption_above_media: false,
+            parse_mode: 'HTML',
+            ...this.telegramRespondThreadId && { message_thread_id: this.telegramRespondThreadId },
+            ...descriction && { caption: descriction },
+            ...status === NotificationTypeProvider.Started && {
+                reply_markup: {
+                    inline_keyboard: [[{
+                        text: 'Посетить стрим',
+                        url: `https://www.twitch.tv/${stream.user_login}`,
+                    }]]
+                }
+            }
+        }
+        return options;
+    }
+
+    /**
+     * Взять из коллекции заготовленных ответов случайное сообщение
+     * @param {NotificationTypeProvider} status Статус для которого будет выбрана коллекция
+     * @returns {string|null} Сообщение, если статус соответствует "о начале стрима" или "конец стрима"
+     */
+    #pickAnnouncementText(status) {
+        return
+            status === NotificationTypeProvider.Started ? this.messagesStartAnnouncement :
+            status === NotificationTypeProvider.Ended ? this.messagesEndAnnouncement :
+            null;
     }
 }
 
