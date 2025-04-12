@@ -9,18 +9,8 @@ const TelegramService = class TelegramService extends ServiceBase {
 
         /** @type {String} */
         this.token = config.token;
-        /** @type {Number} */
-        this.chatId = config.chatId;
 
         this.client = new TelegramBot(this.token, { polling: true });
-    }
-
-    async trySendPhotoAsync(chatId, photo) {
-        try {
-            await this.client.sendPhoto(chatId, photo);
-        } catch (e) {
-            console.log(e);
-        }
     }
 
     async Start() {
@@ -28,6 +18,7 @@ const TelegramService = class TelegramService extends ServiceBase {
         this.isInitializated = true;
         console.log('TelegramServise is not require to start');
     }
+
     async Stop() {
         console.log('TelegramServise is not require to stop');
     }
