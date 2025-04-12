@@ -4,7 +4,7 @@ const filePath = path.join(__dirname, 'AppConfig.json');
 
 class AppConfig {
     /**
-     * Создает класс с найстройками всего решения
+     * РЎРѕР·РґР°РµС‚ РєР»Р°СЃСЃ СЃ РЅР°Р№СЃС‚СЂРѕР№РєР°РјРё РІСЃРµРіРѕ СЂРµС€РµРЅРёСЏ
      * @param {DiscordConfig} discordConfig
      * @param {TwitchConfig} twitchConfig
      * @param {TelegramConfig} telegramConfig
@@ -12,18 +12,18 @@ class AppConfig {
      */
     constructor(discordConfig, twitchConfig, telegramConfig, notificationConfig) {
         /** @type {DiscordConfig} */
-        this.discordConfig = discordConfig;
+        this.discordConfig = discordConfig ?? new DiscordConfig();
         /** @type {TwitchConfig} */
-        this.twitchConfig = twitchConfig;
+        this.twitchConfig = twitchConfig ?? new TwitchConfig();
         /** @type {TelegramConfig} */
-        this.telegramConfig = telegramConfig;
+        this.telegramConfig = telegramConfig ?? new TelegramConfig();
         /** @type {NotificationConfig} */
-        this.notificationConfig = notificationConfig;
+        this.notificationConfig = notificationConfig ?? new NotificationConfig();
     }
 
     /**
-     * Сохраняет файл конфигурации
-     * @returns true если сохранение было успешно
+     * РЎРѕС…СЂР°РЅСЏРµС‚ С„Р°Р№Р» РєРѕРЅС„РёРіСѓСЂР°С†РёРё
+     * @returns true РµСЃР»Рё СЃРѕС…СЂР°РЅРµРЅРёРµ Р±С‹Р»Рѕ СѓСЃРїРµС€РЅРѕ
      */
     save() {
         const json = JSON.stringify(this);
@@ -37,15 +37,38 @@ class AppConfig {
     }
 
     /**
-     * Загружает файл конфигурации
-     * @returns true если загрузка была успешна
+     * Р—Р°РіСЂСѓР¶Р°РµС‚ С„Р°Р№Р» РєРѕРЅС„РёРіСѓСЂР°С†РёРё
+     * @returns true РµСЃР»Рё Р·Р°РіСЂСѓР·РєР° Р±С‹Р»Р° СѓСЃРїРµС€РЅР°
      */
     load() {
         const isExists = fs.existsSync(filePath);
         if (isExists) {
             const file = fs.readFileSync(filePath, 'utf8');
+            /** @type {this} */
             const result = JSON.parse(file);
-            Object.assign(this, result);
+            Object.assign(this, new AppConfig(
+                new DiscordConfig(
+                    result?.discordConfig?.token,
+                    result?.discordConfig?.cliendId,
+                    result?.discordConfig?.guildId
+                ),
+                new TwitchConfig(
+                    result?.twitchConfig?.clientId,
+                    result?.twitchConfig?.secretId
+                ),
+                new TelegramConfig(
+                    result?.telegramConfig?.token
+                ),
+                new NotificationConfig(
+                    result?.notificationConfig?.twitchMonitorChannelNames,
+                    result?.notificationConfig?.discordGuildId,
+                    result?.notificationConfig?.discordRespondChannelId,
+                    result?.notificationConfig?.telegramRespondChannelId,
+                    result?.notificationConfig?.telegramRespondThreadId,
+                    result?.notificationConfig?.messagesStartAnnouncement,
+                    result?.notificationConfig?.messagesEndAnnouncement
+                )
+            ));
             return true;
         }
         else {
@@ -57,7 +80,7 @@ class AppConfig {
 
 class DiscordConfig {
     /**
-     * Создает класс с настройками для модуля Discord
+     * РЎРѕР·РґР°РµС‚ РєР»Р°СЃСЃ СЃ РЅР°СЃС‚СЂРѕР№РєР°РјРё РґР»СЏ РјРѕРґСѓР»СЏ Discord
      * @param {String} token
      * @param {String} clientId
      * @param {String} guildId
@@ -74,7 +97,7 @@ class DiscordConfig {
 
 class TwitchConfig {
     /**
-     * Создает класс с настройками для модуля Twitch
+     * РЎРѕР·РґР°РµС‚ РєР»Р°СЃСЃ СЃ РЅР°СЃС‚СЂРѕР№РєР°РјРё РґР»СЏ РјРѕРґСѓР»СЏ Twitch
      * @param {String} clientId
      * @param {String} secretId
      */
@@ -88,13 +111,13 @@ class TwitchConfig {
 
 class TelegramConfig {
     /**
-     * Создает класс с настройками для модуля Telegram
+     * РЎРѕР·РґР°РµС‚ РєР»Р°СЃСЃ СЃ РЅР°СЃС‚СЂРѕР№РєР°РјРё РґР»СЏ РјРѕРґСѓР»СЏ Telegram
      * @param {String} token
      * @param {Number} chatId
      */
-    constructor(token, chatId) {
+    constructor(token) {
         /** @type {String} */
-        this.token = token
+        this.token = token;
     }
 }
 
@@ -104,26 +127,26 @@ class NotificationConfig {
         discordGuildId,
         discordChannelId,
         telegramChannelId,
-        telegramThreadId = null,
-        messagesStartAnnouncement = [],
-        messagesEndAnnouncement = []) {
+        telegramThreadId,
+        messagesStartAnnouncement,
+        messagesEndAnnouncement) {
         /** @type {string[]} */
         this.twitchMonitorChannelNames = channels;
 
         /** @type {number} */
-        this.discordGuildId = Number.parseInt(discordGuildId);
+        this.discordGuildId = discordGuildId ? Number.parseInt(discordGuildId) : undefined;
         /** @type {number} */
-        this.discordRespondChannelId = Number.parseInt(discordChannelId);
+        this.discordRespondChannelId = discordGuildId ? Number.parseInt(discordChannelId) : undefined;
 
         /** @type {number} */
-        this.telegramRespondChannelId = Number.parseInt(telegramChannelId);
-        /** @type {number|null} */
-        this.telegramRespondThreadId = telegramThreadId ? Number.parseInt(telegramThreadId) : null;
+        this.telegramRespondChannelId = discordGuildId ? Number.parseInt(telegramChannelId) : undefined;
+        /** @type {number} */
+        this.telegramRespondThreadId = telegramThreadId ? Number.parseInt(telegramThreadId) : undefined;
 
         /** @type {string[]} */
-        this.messagesStartAnnouncement = messagesStartAnnouncement.length > 0 ? messagesStartAnnouncement : ['Стрим начался!'];
+        this.messagesStartAnnouncement = messagesStartAnnouncement?.length > 0 ? messagesStartAnnouncement : ['РЎС‚СЂРёРј РЅР°С‡Р°Р»СЃСЏ!'];
         /** @type {string[]} */
-        this.messagesEndAnnouncement = messagesEndAnnouncement.length > 0 ? messagesEndAnnouncement : ['Стрим закончился.'];
+        this.messagesEndAnnouncement = messagesEndAnnouncement?.length > 0 ? messagesEndAnnouncement : ['РЎС‚СЂРёРј Р·Р°РєРѕРЅС‡РёР»СЃСЏ.'];
     }
 }
 
