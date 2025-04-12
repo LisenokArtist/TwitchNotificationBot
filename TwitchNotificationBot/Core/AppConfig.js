@@ -95,21 +95,35 @@ class TelegramConfig {
     constructor(token, chatId) {
         /** @type {String} */
         this.token = token
-        /** @type {Number} */
-        this.chatId = chatId;
     }
 }
 
 class NotificationConfig {
-    constructor(channels, discordGuildId, discordChannelId, telegramChannelId) {
+    constructor(
+        channels,
+        discordGuildId,
+        discordChannelId,
+        telegramChannelId,
+        telegramThreadId = null,
+        messagesStartAnnouncement = [],
+        messagesEndAnnouncement = []) {
         /** @type {string[]} */
         this.twitchMonitorChannelNames = channels;
+
         /** @type {number} */
         this.discordGuildId = Number.parseInt(discordGuildId);
         /** @type {number} */
         this.discordRespondChannelId = Number.parseInt(discordChannelId);
+
         /** @type {number} */
         this.telegramRespondChannelId = Number.parseInt(telegramChannelId);
+        /** @type {number|null} */
+        this.telegramRespondThreadId = telegramThreadId ? Number.parseInt(telegramThreadId) : null;
+
+        /** @type {string[]} */
+        this.messagesStartAnnouncement = messagesStartAnnouncement.length > 0 ? messagesStartAnnouncement : ['Стрим начался!'];
+        /** @type {string[]} */
+        this.messagesEndAnnouncement = messagesEndAnnouncement.length > 0 ? messagesEndAnnouncement : ['Стрим закончился.'];
     }
 }
 
