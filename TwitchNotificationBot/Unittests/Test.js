@@ -6,7 +6,9 @@ const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitor
 /*const { NotificationService } = require('../Services/Notification/NotificationService');*/
 //const { StreamResponse } = require('../Core/Twitch/TwitchApiModels');
 const { TwitchNotificationBot } = require('../TwitchNotificationBot');
-const { NotificationTypeProvider } = require('../Services/Notification/NotificationService');
+const { NotificationTypeProvider, NotificationService } = require('../Services/Notification/NotificationService');
+const conf = new AppConfig(); conf.load();
+
 
 describe('AppConfig', function () {
     it('Generate empty app file config', function () {
@@ -21,7 +23,7 @@ describe('AppConfig', function () {
         const config = new AppConfig();
         const result = config.load();
         return result;
-    })
+    });
 })
 
 describe('GiveRoleOnReactionSettings', function () {
@@ -104,7 +106,12 @@ describe('TwitchService', function () {
     }).timeout(50000);
 });
 
-describe('NotificationService', function () {
+describe('NotificationService', function (done) {
+    it('pickAnnouncementText', function () {
+        const app = new TwitchNotificationBot(conf);
+        console.log(app.notificationService.pickAnnouncementTextTest(NotificationTypeProvider.Started));
+        console.log(app.notificationService.pickAnnouncementTextTest(NotificationTypeProvider.Ended));
+    });
     it('Stream started (discord)', async function () {
         const appConfig = new AppConfig();
         appConfig.load();
@@ -114,9 +121,10 @@ describe('NotificationService', function () {
         const stream = streams[0];
         await app.discordService.Start();
         await app.notificationService.Start();
-        return await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, stream);
+        await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, stream);
+        done();
     });
-    it('Stream started (telegram)', async function () {
+    it('Stream started (telegram)', async function (done) {
         const appConfig = new AppConfig();
         appConfig.load();
         const app = new TwitchNotificationBot(appConfig);
@@ -124,7 +132,19 @@ describe('NotificationService', function () {
         const streams = await app.twitchService.getStreams();
         const stream = streams[Math.floor(Math.random() * streams.length)];
         await app.notificationService.Start();
-        return await app.notificationService.respondToTelegramAsyncTest(NotificationTypeProvider.Started, stream);
+        await app.notificationService.respondToTelegramAsyncTest(NotificationTypeProvider.Started, stream);
+        done();
+    });
+    it('Stream ended (telegram)', async function (done) {
+        const appConfig = new AppConfig();
+        appConfig.load();
+        const app = new TwitchNotificationBot(appConfig);
+        await app.twitchService.Start();
+        const streams = await app.twitchService.getStreams();
+        const stream = streams[Math.floor(Math.random() * streams.length)];
+        await app.notificationService.Start();
+        await app.notificationService.respondToTelegramAsyncTest(NotificationTypeProvider.Ended, stream);
+        done();
     });
 });
 
