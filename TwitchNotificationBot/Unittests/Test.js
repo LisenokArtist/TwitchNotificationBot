@@ -1,12 +1,15 @@
 ﻿const { GiveRoleOnReactionSettings } = require('../Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
-const { AppConfig, DiscordConfig, TwitchConfig } = require('../Core/AppConfig');
-const { TwitchService } = require('../Services/Twitch/TwitchService');
-const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitorManager');
+
+//const { TwitchService } = require('../Services/Twitch/TwitchService');
+//const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitorManager');
 //const { DiscordService } = require('../Services/Discord/DiscordService');
 /*const { NotificationService } = require('../Services/Notification/NotificationService');*/
 //const { StreamResponse } = require('../Core/Twitch/TwitchApiModels');
-const { TwitchNotificationBot } = require('../TwitchNotificationBot');
-const { NotificationTypeProvider, NotificationService } = require('../Services/Notification/NotificationService');
+//const { TwitchNotificationBot } = require('../TwitchNotificationBot');
+//const { NotificationTypeProvider, NotificationService } = require('../Services/Notification/NotificationService');
+const { AppConfig, DiscordConfig, TwitchConfig } = require('../Core/AppConfig');
+const { TelegramService } = require('../Services/Telegram/TelegramService');
+const { DiscordService } = require('../Services/Discord/DiscordService');
 const conf = new AppConfig(); conf.load();
 
 
@@ -40,6 +43,56 @@ describe('GiveRoleOnReactionSettings', function () {
         console.log(items.length);
     });
 });
+
+describe('Services', () => {
+    describe('Telegram', () => {
+        it('Start',async () => {
+            const service = new TelegramService(conf.telegramConfig);
+            await service.Start();
+            console.log(`Telegram service status polling: ${service.client.isPolling()}`);
+        });
+    });
+
+    describe('Discord', async () => {
+        it('Start', async () => {
+            const service = new DiscordService(conf.discordConfig);
+            await service.Start();
+            
+            console.log(`Discord service status ready: ${service.client.isReady()}`);
+        });
+
+        it('Stop', async () => {
+            const service = new DiscordService(conf.discordConfig);
+            await service.Start();
+            await service.Stop();
+            console.log(`Discord service status ready: ${service.client.isReady()}`);
+        });
+
+
+        //it('getRespondChannel', () => {
+        //})
+
+        //it('respondToDiscord', async function () {
+        //    try {
+        //        const appConfig = new AppConfig();
+        //        appConfig.load();
+        //        const app = new TwitchNotificationBot(appConfig);
+        //        await app.discordService.Start();
+        //        await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, {
+        //            title: "title",
+        //            url: "https://www.google.ru/",
+        //            thumbnail_url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+        //            image: {
+        //                url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
+        //            },
+        //        });
+        //        console.log(`Success`);
+        //    } catch (e) {
+        //        console.log(`Fail with error: ${e}`);
+        //    }
+        //});
+    });
+})
 
 describe('TwitchService', function () {
     it('GetTokenOrNew', async function () {
@@ -148,27 +201,7 @@ describe('NotificationService', function (done) {
     });
 });
 
-describe('Discord', function () {
-    it('respondToDiscord', async function () {
-        try {
-            const appConfig = new AppConfig();
-            appConfig.load();
-            const app = new TwitchNotificationBot(appConfig);
-            await app.discordService.Start();
-            await app.notificationService.respondToDiscordAsyncTest(NotificationTypeProvider.Started, {
-                title: "title",
-                url: "https://www.google.ru/",
-                thumbnail_url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
-                image: {
-                    url: "https://www.google.ru/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
-                },
-            });
-            console.log(`Success`);
-        } catch (e) {
-            console.log(`Fail with error: ${e}`);
-        }
-    });
-});
+
 
 describe('Telegram', function () {
     it('Send message to channel', async function () {
