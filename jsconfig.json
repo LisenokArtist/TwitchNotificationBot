@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "checkJs": true,
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "node-telegram-bot-api": ["./TwitchNotificationBot/types/node-telegram-bot-api.d.ts"]
+    }
+  },
+  "include": [
+    "TwitchNotificationBot/**/*.js",
+    "TwitchNotificationBot/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "TwitchNotificationBot/node_modules",
+    "TwitchNotificationBot/Unittests"
+  ]
+}
