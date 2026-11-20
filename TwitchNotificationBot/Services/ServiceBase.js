@@ -5,7 +5,7 @@ const NotImplementException = new Error("Not implement exception");
 const ServiceBase = class ServiceBase extends EventEmitter {
     constructor() {
         super();
-        // Не описывай тип, иначе будет ошибка цикличной вложенности
+        // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         this.parent;
 
         this.isInitializated = false;
@@ -21,7 +21,7 @@ const ServiceBase = class ServiceBase extends EventEmitter {
     }
 
     async Start() {
-        if (!this.isInitializated) this.Init();
+        if (!this.isInitializated) await this.Init();
     }
 
     async Stop() {

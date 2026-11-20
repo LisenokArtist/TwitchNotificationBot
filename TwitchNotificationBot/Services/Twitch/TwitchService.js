@@ -44,7 +44,7 @@ const TwitchService = class TwitchService extends ServiceBase {
     }
 
     /**
-     * Передает компоненту ссылку на родителя
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @returns {TwitchService}
      */
     setParentToManager() {
@@ -59,8 +59,8 @@ const TwitchService = class TwitchService extends ServiceBase {
     }
 
     /**
-     * Задает список каналов к мониторингу по имени
-     * @param {String[]} channels Список названий каналов
+     * пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+     * @param {String[]} channels пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     setChannelsByName(channels) {
         if (channels.length > 20) throw new Error('More then 20 values not supported');
@@ -68,8 +68,8 @@ const TwitchService = class TwitchService extends ServiceBase {
     }
 
     /**
-     * Сохраняет токен в файл
-     * @returns true если сохранение было успешно
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
+     * @returns true пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     #saveAuthToken() {
         const json = JSON.stringify(this.authToken);
@@ -83,8 +83,8 @@ const TwitchService = class TwitchService extends ServiceBase {
     }
 
     /**
-     * Загружает токен из файла
-     * @returns true если загрузка была успешна
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+     * @returns true пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     #loadAuthToken() {
         const isExist = fs.existsSync(filePath);
@@ -99,7 +99,7 @@ const TwitchService = class TwitchService extends ServiceBase {
     }
 
     /**
-     * Получает новый токен авторизации
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @returns {TokenResponse}
      */
     async #getNewTokenAsync() {
@@ -179,15 +179,15 @@ const TwitchService = class TwitchService extends ServiceBase {
     }
 
     /**
-     * Выплевывает ошибку
-     * @param {String} message Сообщение с ошибкой
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {String} message пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     #error(message) {
         throw new Error(message);
     }
 
     /**
-     * Выполняет get запрос
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ get пїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {any} endpoint
      * @param {any} type
      * @returns {Response}
@@ -206,7 +206,7 @@ const TwitchService = class TwitchService extends ServiceBase {
             }
         }
 
-        //тут возникает ошибка фетча
+        //пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         const response = await fetch(url, options);
 
         switch (response.status) {
@@ -219,16 +219,16 @@ const TwitchService = class TwitchService extends ServiceBase {
         return response;
     }
 
-    /** Запускает работу сервиса */
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
     async Start() {
-        //Пропускаем инициализацию
+        //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         this.isInitializated = true;
 
         await this.#updateTokenAsync();
         this.streamMonitorManager.startTimer();
     }
 
-    /** Останавливает работу сервиса */
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
     async Stop() {
         this.streamMonitorManager.stopTimer();
     }
@@ -249,19 +249,19 @@ const TwitchService = class TwitchService extends ServiceBase {
         if (!this.authToken) {
             const isLoaded = this.#loadAuthToken();
             if (!isLoaded) {
-                getAndSetToken();
+                await getAndSetToken();
             }
             console.log('Token loaded from file');
         } else {
             const isValid = await this.#validate();
             if (!isValid) {
-                getAndSetToken();
+                await getAndSetToken();
             }
         }
     }
 
     /**
-     * Получает стримы
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
      * @param { String[] } userLogins
      * @returns { StreamResponse[] | null }
      */
@@ -280,7 +280,7 @@ const TwitchService = class TwitchService extends ServiceBase {
         return null;
     }
 
-    /** Для юнит-тестов */
+    /** пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅ */
     async TestUpdateTokenAsync() {
         return await this.#updateTokenAsync();
     }

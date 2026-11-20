@@ -25,9 +25,9 @@ class TwitchNotificationBot {
     }
 
     /**
-     * Возвращает сервис по имени
-     * @param {ServiceBase} instance Класс сервиса
-     * @returns {ServiceBase|undefined} Сервис если такой существует или undefined
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+     * @param {ServiceBase} instance пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+     * @returns {ServiceBase|undefined} пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ undefined
      */
     getService(instance) {
         return this.services.find(x => x instanceof instance);
@@ -64,7 +64,9 @@ class TwitchNotificationBot {
 
     async Start() {
         try {
-            this.services.forEach(async x => await x.Start());
+            for (const service of this.services) {
+                await service.Start();
+            }
             this.isRunning = true;
         } catch (e) {
             console.log(`Unable to start services: ${e}`);
@@ -73,7 +75,9 @@ class TwitchNotificationBot {
 
     async Stop() {
         try {
-            this.services.forEach(async x => await x.Stop());
+            for (const service of this.services) {
+                await service.Stop();
+            }
             this.isRunning = false;
         } catch (e) {
             console.log(`Unable to stop services: ${e}`);

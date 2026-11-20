@@ -4,9 +4,9 @@ const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels')
 
 const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     /**
-     * Инициализирует класс менеджера стримов, который отслеживает их статус
-     * @param {TwitchService} twitchService Основной модуль, которому принадлежит менеджер
-     * @param {Number} checkIntervalInSeconds Как часто будет вызываться метод проверки стримов в секундах
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {TwitchService} twitchService пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {Number} checkIntervalInSeconds пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     constructor(checkIntervalInSeconds) {
         super();
@@ -24,13 +24,13 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
         this.timerInterval = null;
     }
 
-    /** Останавливает таймер проверки отслеживаемых стримов */
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
     stopTimer() {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
     }
 
-    /** Запускает таймер проверки отслеживаемых стримов */
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
     startTimer() {
         if (!this.timerInterval) {
             this.timerInterval = setInterval(
@@ -42,8 +42,8 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     }
 
     /**
-     * Задает список каналов к мониторингу по имени
-     * @param {String[]} names Список названий каналов
+     * пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+     * @param {String[]} names пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     setChannelsByName(names) {
         if (!names)
@@ -57,7 +57,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
             'Monitored channels is updated');
     }
 
-    /** Очищает список каналов, которые отслеживаются */
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
     clearChannels() {
         this.monitoredChannels = new Array();
 
@@ -65,7 +65,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
             'Monitored channels is cleared');
     }
 
-    /** Событие таймера */
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
     async onTimerCallback() {
         try {
             this.emit(StreamMonitorEventProvider.OnTimerTick, 'On timer tick');
@@ -75,7 +75,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
         }
     }
 
-    /** Проверяет изменения отслеживаемых стримов */
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
     async #updateLiveStreamAsync() {
         if (this.monitoredChannels.length === 0) return;
 
@@ -109,7 +109,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     }
 
     /**
-     * Обрабатывает коллекцию стримов, попавшие под категорию обновленных
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {StreamPair[]} items
      */
     #liveStreamsUpdated(items) {
@@ -124,7 +124,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
 
             if (cachedStream) {
                 const index = this.liveStreams.indexOf(cachedStream);
-                this.liveStreams[index] = stream;
+                this.liveStreams[index] = i.stream;
                 updated.push(i);
             } else {
                 this.liveStreams.push(i.stream);
@@ -137,7 +137,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     }
 
     /**
-     * Обрабатывает коллекцию стримов, попавшие под категорию завершенных
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {string[]} items
      */
     #liveStreamsEnded(items) {
@@ -150,7 +150,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
             if (!cachedStream) return;
 
             const index = this.liveStreams.indexOf(cachedStream);
-            this.liveStreams = this.liveStreams.slice(index, 1);
+            this.liveStreams.splice(index, 1);
             ended.push(new StreamPair(user_login, cachedStream))
         })
 
@@ -158,7 +158,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     }
 
     /**
-     * Создает событие о начатых стримах
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {StreamPair[]} streams
      */
     #emitStreamsStarted(streams) {
@@ -172,10 +172,10 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     }
 
     /**
-     * Создает событие о обновленных стримах.
-     * Можете переопределить условие при котором будет создано
-     * событие со списком обновленных стримов, например
-     * учитывать только обновленное название канала и описание
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+     * пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {StreamPair[]} streams
      */
     #emitStreamsUpdated(streams) {
@@ -189,7 +189,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     }
 
     /**
-     * Создает событие о завершенных стримах
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {StreamPair[]} streams
      */
     #emitStreamsEnded(streams) {
@@ -212,10 +212,10 @@ const StreamPair = function StreamPair(user_login, stream) {
 
 const OnStreamEventArgs = class OnStreamEventArgs {
     /**
-     * Создает EventArgs класс для событий изменений статуса стрима
-     * @param {String} channel Название канала
-     * @param {StreamResponse} stream Данные о стриме
-     * @param {String} description Описание события
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ EventArgs пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {String} channel пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {StreamResponse} stream пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {String} description пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     constructor(channel, stream, description = '') {
         /** @type {String} */

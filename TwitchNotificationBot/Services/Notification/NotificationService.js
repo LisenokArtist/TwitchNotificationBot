@@ -139,7 +139,7 @@ class NotificationService extends ServiceBase {
                     this.#streamIsEnded(streams);
                     break;
             }
-            console.log(eventArgs.description);
+            console.log(eventArgs.map(x => x.description).join(', '));
         } catch (e) {
             console.log(`Unexpected error onStream event: ${e}`);
         } finally {
@@ -221,7 +221,7 @@ class NotificationService extends ServiceBase {
     /**
      * Срабатывает когда таймер отработал свой интервал
      */
-    #onTimerCallback() {
+    async #onTimerCallback() {
         try {
             do {
                 let result = false;
@@ -229,10 +229,10 @@ class NotificationService extends ServiceBase {
                 const item = this.queie.collection[0];
                 switch (item.key) {
                     case NotificationRespondProvider.ToDiscord:
-                        result = this.#respondToDiscord(item.value);
+                        result = await this.#respondToDiscord(item.value);
                         break;
                     case NotificationRespondProvider.ToTelegram:
-                        result = this.#respondToTelegram(item.value);
+                        result = await this.#respondToTelegram(item.value);
                         break;
                 }
 
@@ -267,7 +267,7 @@ class NotificationService extends ServiceBase {
                 
                 switch (arg.type) {
                     case NotificationTypeProvider.Started: {
-                        channel.send({
+                        await channel.send({
                             content: arg.type,
                             embeds: [this.#buildEmbedMessage(
                                 arg.stream,
@@ -280,7 +280,7 @@ class NotificationService extends ServiceBase {
                         break;
                     }
                     case NotificationTypeProvider.Ended: {
-                        channel.send({
+                        await channel.send({
                             content: arg.type,
                             embeds: [this.#buildEmbedMessage(
                                 arg.stream

@@ -98,7 +98,7 @@ class DiscordService extends ServiceBase {
         try {
             console.log(`Started refreshing ${commands.size} application (/) commands.`);
             const data = await rest.put(
-                Routes.applicationGuildCommands(this.config.cliendId, this.config.guildId),
+                Routes.applicationGuildCommands(this.config.clientId, this.config.guildId),
                 {
                     body: commands.map((c) => {
                         /** @type {InteractionCommand} */
@@ -174,7 +174,7 @@ class DiscordService extends ServiceBase {
     }
 
     async Start() {
-        if (!this.isInitializated) this.Init();
+        if (!this.isInitializated) await this.Init();
 
         try {
             if (this.client.isReady() === false) {

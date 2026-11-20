@@ -1,6 +1,6 @@
 const { KeyValuePair } = require('../KeyValuePair');
 
-/** Возможно эта структура больше не понадобится */
+/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 const Dictionary = class Dictionary {
     constructor() {
         /** @type {KeyValuePair[]} */
@@ -9,7 +9,7 @@ const Dictionary = class Dictionary {
     }
 
     /**
-     * Находит индекс элемента коллекции
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {(obj: KeyValuePair, index: number, array: KeyValuePair[])} predicate
      * @returns {Number}
      */
@@ -18,7 +18,7 @@ const Dictionary = class Dictionary {
     }
 
     /**
-     * Добавляет элемент в коллекцию
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {KeyValuePair} item
      */
     push(item) {
@@ -34,7 +34,7 @@ const Dictionary = class Dictionary {
         this.collection.push(item);
     }
     /**
-     * Убирает последний элемент из коллекции
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @returns {KeyValuePair}
      */
     pop() {
@@ -42,7 +42,7 @@ const Dictionary = class Dictionary {
     }
 
     /**
-     * Убирает первый элемент из коллекции по ключу 
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ 
      * @param {(obj: KeyValuePair, index: number, array: KeyValuePair[])} predicate
      * @returns {KeyValuePair}
      */
@@ -51,7 +51,7 @@ const Dictionary = class Dictionary {
         if (index === -1) return null;
 
         const item = this.collection[index];
-        this.collection = this.collection.slice(index, 1);
+        this.collection.splice(index, 1);
         return item;
     }
 }

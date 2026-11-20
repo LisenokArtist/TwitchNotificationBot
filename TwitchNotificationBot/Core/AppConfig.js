@@ -49,7 +49,7 @@ class AppConfig {
             Object.assign(this, new AppConfig(
                 new DiscordConfig(
                     result?.discordConfig?.token,
-                    result?.discordConfig?.cliendId,
+                    result?.discordConfig?.clientId,
                     result?.discordConfig?.guildId
                 ),
                 new TwitchConfig(
@@ -89,7 +89,7 @@ class DiscordConfig {
         /** @type {String} */
         this.token = token;
         /** @type {String} */
-        this.cliendId = clientId;
+        this.clientId = clientId;
         /** @type {String} */
         this.guildId = guildId;
     }
@@ -136,10 +136,10 @@ class NotificationConfig {
         /** @type {number} */
         this.discordGuildId = discordGuildId ? Number.parseInt(discordGuildId) : undefined;
         /** @type {number} */
-        this.discordRespondChannelId = discordGuildId ? Number.parseInt(discordChannelId) : undefined;
+        this.discordRespondChannelId = discordChannelId ? Number.parseInt(discordChannelId) : undefined;
 
         /** @type {number} */
-        this.telegramRespondChannelId = discordGuildId ? Number.parseInt(telegramChannelId) : undefined;
+        this.telegramRespondChannelId = telegramChannelId ? Number.parseInt(telegramChannelId) : undefined;
         /** @type {number} */
         this.telegramRespondThreadId = telegramThreadId ? Number.parseInt(telegramThreadId) : undefined;
 

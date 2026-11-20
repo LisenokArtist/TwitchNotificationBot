@@ -1,6 +1,6 @@
 const { KeyValuePair } = require('../KeyValuePair');
 
-//Хз как это назвать
+//пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 const PairedQueie = class PairedQueie {
     constructor() {
         /** @type {KeyValuePair[]} */
@@ -8,7 +8,7 @@ const PairedQueie = class PairedQueie {
     }
 
     /**
-     * Добавляет элементы в коллекцию
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {KeyValuePair[]} items
      */
     pushes(items) {
@@ -20,11 +20,11 @@ const PairedQueie = class PairedQueie {
             throw new Error('One of param is not a KeyValuePair element');
         }
 
-        this.collection.push(items);
+        this.collection.push(...items);
     }
 
     /**
-     * Обновляет элемент коллекции
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {number} index
      * @param {KeyValuePair} item
      */
@@ -41,7 +41,7 @@ const PairedQueie = class PairedQueie {
     }
 
     /**
-     * Находит индекс первого элемента
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {(obj: KeyValuePair, index: number, array: KeyValuePair[])} predicate
      * @returns {number}
      */
@@ -50,7 +50,7 @@ const PairedQueie = class PairedQueie {
     }
 
     /**
-     * Извлекает из коллекции первый элемент
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {(obj: KeyValuePair, index: number, array: KeyValuePair[])} predicate
      * @returns {KeyValuePair|undefined}
      */
@@ -59,7 +59,7 @@ const PairedQueie = class PairedQueie {
         if (index === -1) return undefined;
 
         const item = this.collection[index];
-        this.collection = this.collection.slice(index, 1);
+        this.collection.splice(index, 1);
         return item;
     }
 }
