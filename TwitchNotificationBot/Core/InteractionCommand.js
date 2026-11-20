@@ -1,11 +1,11 @@
-const { SlashCommandBuilder } = require('../node_modules/@discordjs/builders/dist/index');
-const BaseClient = require('../node_modules/discord.js/src/client/BaseClient');
+const { SlashCommandBuilder } = require('@discordjs/builders');
+const { BaseClient } = require('discord.js');
 const InteractionCommand = class InteractionCommand {
     /**
-     * Создает компонент команды
-     * @param {SlashCommandBuilder} commandBuilder Конструктор построения команды
-     * @param {Function} executeMethod Метод действия для команды
-     * @param {Function | null} onCommandAdded Метод, вызываемый при добавлении команды
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {SlashCommandBuilder} commandBuilder пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {Function} executeMethod пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+     * @param {Function | null} onCommandAdded пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      */
     constructor(commandBuilder, executeMethod, onCommandAdded) {
         /** @type {SlashCommandBuilder} */

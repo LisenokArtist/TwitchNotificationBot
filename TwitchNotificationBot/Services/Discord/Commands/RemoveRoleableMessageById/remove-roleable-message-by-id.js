@@ -1,12 +1,7 @@
-const { SlashCommandBuilder } = require('../../../../node_modules/@discordjs/builders/dist/index');
+const { SlashCommandBuilder } = require('@discordjs/builders');
 const { InteractionCommand } = require('../../../../Core/InteractionCommand');
-const CommandInteraction = require('../../../../node_modules/discord.js/src/structures/CommandInteraction');
-const { MessageFlags } = require('../../../../node_modules/discord-api-types/v10');
+const { CommandInteraction, MessageFlags, Client, MessageReaction, Message, TextChannel } = require('discord.js');
 const { GiveRoleOnReactionSettings } = require('../../CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
-const Client = require('../../../../node_modules/discord.js/src/client/Client');
-const MessageReaction = require('../../../../node_modules/discord.js/src/structures/MessageReaction');
-const { Message } = require('../../../../node_modules/discord.js/src/structures/Message');
-const TextChannel = require('../../../../node_modules/discord.js/src/structures/TextChannel');
 
 const RemoveRoleableMessageById = new InteractionCommand(
     new SlashCommandBuilder()

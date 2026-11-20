@@ -1,13 +1,7 @@
-const { SlashCommandBuilder } = require('../../../../node_modules/@discordjs/builders/dist/index');
+const { SlashCommandBuilder } = require('@discordjs/builders');
 const { InteractionCommand } = require('../../../../Core/InteractionCommand');
-const CommandInteraction = require('../../../../node_modules/discord.js/src/structures/CommandInteraction');
-const { MessageFlags } = require('../../../../node_modules/discord-api-types/v10');
-const CommandInteractionOptionResolver = require('../../../../node_modules/discord.js/src/structures/CommandInteractionOptionResolver');
-const { Role } = require('../../../../node_modules/discord.js/src/structures/Role');
+const { CommandInteraction, MessageFlags, CommandInteractionOptionResolver, Role, TextChannel, Message, MessageReaction } = require('discord.js');
 const { GiveRoleOnReactionSettings } = require('../../CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
-const TextChannel = require('../../../../node_modules/discord.js/src/structures/TextChannel');
-const { Message } = require('../../../../node_modules/discord.js/src/structures/Message');
-const MessageReaction = require('../../../../node_modules/discord.js/src/structures/MessageReaction');
 
 const GiveRoleOnReactionCommand = new InteractionCommand(
     new SlashCommandBuilder()

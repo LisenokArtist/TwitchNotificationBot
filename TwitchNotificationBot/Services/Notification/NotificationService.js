@@ -8,10 +8,8 @@ const { NotificationConfig } = require('../../Core/AppConfig');
 const { KeyValuePair } = require('../../Core/Collections/KeyValuePair');
 const { Dictionary } = require('../../Core/Collections/Dictionary/Dictionary');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
-const { resolve } = require('../../node_modules/discord.js/src/util/ActivityFlagsBitField');
 const { PairedQueie } = require('../../Core/Collections/PairedQueie/PairedQueie');
-const EmbedBuilder = require('../../node_modules/discord.js/src/structures/EmbedBuilder');
-const User = require('../../node_modules/discord.js/src/structures/User');
+const { EmbedBuilder, User } = require('discord.js');
 
 class NotificationService extends ServiceBase {
 

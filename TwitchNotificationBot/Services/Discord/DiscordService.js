@@ -1,17 +1,13 @@
-const { IntentsBitField, Partials } = require('../../node_modules/discord.js/src/index');
-const Client = require('../../node_modules/discord.js/src/client/Client');
-const { GatewayIntentBits } = require('../../node_modules/discord-api-types/v10');
-const { Collection } = require('../../node_modules/@discordjs/collection/dist/index');
+const { IntentsBitField, Partials, Client, GatewayIntentBits, Collection } = require('discord.js');
 const path = require('node:path');
 const fs = require('node:fs');
-const CommandInteraction = require('../../node_modules/discord.js/src/structures/CommandInteraction');
-const { REST } = require('../../node_modules/@discordjs/rest/dist/index');
+const { CommandInteraction } = require('discord.js');
+const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord.js');
 const { DiscordConfig } = require('../../Core/AppConfig');
 const { InteractionCommand } = require('../../Core/InteractionCommand');
 const { ServiceBase } = require('../ServiceBase');
-const { Guild } = require('../../node_modules/discord.js/src/structures/Guild');
-const TextChannel = require('../../node_modules/discord.js/src/structures/TextChannel');
+const { Guild, TextChannel } = require('discord.js');
 
 class DiscordService extends ServiceBase {
     /** @param {DiscordConfig} config */
@@ -26,7 +22,7 @@ class DiscordService extends ServiceBase {
     }
 
     /**
-     * Обновляет канал куда отправлять уведомления
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
      * @param {number} guildId
      * @param {number} channelId
      */
@@ -43,7 +39,7 @@ class DiscordService extends ServiceBase {
     }
 
     /**
-     * Получает канал.
+     * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
      * @param {number} guildId
      * @param {number} channelId
      * @returns {TextChannel}
