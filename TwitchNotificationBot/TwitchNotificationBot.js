@@ -10,57 +10,29 @@ class TwitchNotificationBot {
      * @param {AppConfig} config
      */
     constructor(config) {
+        // Composition root: явные зависимости между сервисами.
+        this.twitchService = new TwitchService(config.twitchConfig);
+        this.discordService = new DiscordService(config.discordConfig);
+        this.telegramService = new TelegramService(config.telegramConfig);
+
+        this.notificationService = new NotificationService(
+            config.notificationConfig,
+            this.twitchService,
+            this.discordService,
+            this.telegramService
+        );
+
         /** @type {ServiceBase[]} */
         this.services = [
-            new TwitchService(config.twitchConfig),
-            new DiscordService(config.discordConfig),
-            new TelegramService(config.telegramConfig),
-            new NotificationService(config.notificationConfig)
+            this.twitchService,
+            this.discordService,
+            this.telegramService,
+            this.notificationService
         ];
 
         /** @type {Boolean} */
         this.isRunning = false;
-
-        this.setParentToServices();
     }
-
-    /**
-     * ���������� ������ �� �����
-     * @param {ServiceBase} instance ����� �������
-     * @returns {ServiceBase|undefined} ������ ���� ����� ���������� ��� undefined
-     */
-    getService(instance) {
-        return this.services.find(x => x instanceof instance);
-    }
-
-    /** @type {TwitchService} */
-    get twitchService() {
-        return this.getService(TwitchService);
-    }
-    /** @type {DiscordService} */
-    get discordService() {
-        return this.getService(DiscordService);
-    }
-    /** @type {TelegramService} */
-    get telegramService() {
-        return this.getService(TelegramService);
-    }
-    /** @type {NotificationService} */
-    get notificationService() {
-        return this.getService(NotificationService);
-    }
-
-    setParentToServices() {
-        for (var i in this.services) {
-            this.services[i].setParentToServices = this.setParentToServices;
-            this.services[i].setParentToServices();
-            this.services[i].parent = this;
-            delete this.services[i].setParentToServices;
-        }
-        return this;
-    }
-
-
 
     async Start() {
         try {

@@ -1,6 +1,6 @@
 const { EventEmitter } = require('node:events');
-const { TwitchService } = require('./TwitchService');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels')
+/** @typedef {import('./TwitchService').TwitchService} TwitchService */
 
 const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
     /**
@@ -8,11 +8,11 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
      * @param {TwitchService} twitchService �������� ������, �������� ����������� ��������
      * @param {Number} checkIntervalInSeconds ��� ����� ����� ���������� ����� �������� ������� � ��������
      */
-    constructor(checkIntervalInSeconds) {
+    constructor(checkIntervalInSeconds, twitchService) {
         super();
 
         /** @type { TwitchService } */
-        this.twitchService;
+        this.twitchService = twitchService;
         /** @type { Number } */
         this.checkIntervalInSeconds = checkIntervalInSeconds;
 

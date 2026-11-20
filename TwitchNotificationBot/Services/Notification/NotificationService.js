@@ -1,8 +1,4 @@
-const { TwitchNotificationBot } = require('../../TwitchNotificationBot');
 const { ServiceBase } = require('../ServiceBase');
-const { TwitchService } = require('../Twitch/TwitchService');
-const { DiscordService } = require('../Discord/DiscordService');
-const { TelegramService } = require('../Telegram/TelegramService');
 const { StreamMonitorEventProvider, OnStreamEventArgs } = require('../Twitch/StreamMonitorManager');
 const { NotificationConfig } = require('../../Core/AppConfig');
 const { KeyValuePair } = require('../../Core/Collections/KeyValuePair');
@@ -10,12 +6,27 @@ const { Dictionary } = require('../../Core/Collections/Dictionary/Dictionary');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
 const { PairedQueie } = require('../../Core/Collections/PairedQueie/PairedQueie');
 const { EmbedBuilder, User } = require('discord.js');
+/** @typedef {import('../Twitch/TwitchService').TwitchService} TwitchService */
+/** @typedef {import('../Discord/DiscordService').DiscordService} DiscordService */
+/** @typedef {import('../Telegram/TelegramService').TelegramService} TelegramService */
 
 class NotificationService extends ServiceBase {
 
-    /** @param {NotificationConfig} config */
-    constructor(config) {
+    /**
+     * @param {NotificationConfig} config
+     * @param {TwitchService} twitch
+     * @param {DiscordService} discord
+     * @param {TelegramService} telegram
+     */
+    constructor(config, twitch, discord, telegram) {
         super();
+
+        /** @type {TwitchService} */
+        this.twitch = twitch;
+        /** @type {DiscordService} */
+        this.discord = discord;
+        /** @type {TelegramService} */
+        this.telegram = telegram;
 
         /** @type {String[]} */
         this.twitchChannelNames = config.twitchMonitorChannelNames;
@@ -59,7 +70,9 @@ class NotificationService extends ServiceBase {
         this.isInitializated = true;
 
         if (!this.isEventsRegistered) {
-            await this.#retriveServicesAndRegisterEvents();
+            this.#registerSettings();
+            this.#registerEvents();
+            this.isEventsRegistered = true;
         }
     }
 
@@ -67,48 +80,18 @@ class NotificationService extends ServiceBase {
         console.log('NotificationService is not require to stop');
     }
 
-    /** Извлекает сервисы и регистрирует события */
-    async #retriveServicesAndRegisterEvents() {
-        /** @type {TwitchNotificationBot}*/
-        const base = this.parent;
-        if (!base) throw new Error('Parent property is not set');
-
-        const twitchIndex = base.services.findIndex(x => x.constructor.name == 'TwitchService');
-        if (!base.services[twitchIndex]) throw new Error('Twitch service not defined');
-
-        const discordIndex = base.services.findIndex(x => x.constructor.name == 'DiscordService')
-        if (!base.services[discordIndex]) throw new Error('Discord service not defined');
-
-        const telegramIndex = base.services.findIndex(x => x.constructor.name == 'TelegramService');
-        if (!base.services[telegramIndex]) throw new Error('Telegram service not defined');
-
-        this.#registerSettings(
-            base.services[twitchIndex]);
-
-        this.#registerEvents(
-            base.services[twitchIndex],
-            base.services[discordIndex],
-            base.services[telegramIndex]);
-
-        this.isEventsRegistered = true;
-    }
-
     /**
      * Регистрирует настройки
-     * @param {TwitchService} twitch
      */
-    #registerSettings(twitch) {
-        twitch.setChannelsByName(this.twitchChannelNames);
+    #registerSettings() {
+        this.twitch.setChannelsByName(this.twitchChannelNames);
     }
 
     /**
      * Регистрирует события
-     * @param {TwitchService} twitch
-     * @param {DiscordService} discord
-     * @param {TelegramService} telegram
      */
-    #registerEvents(twitch, discord, telegram) {
-        this.#registerTwitchEvents(twitch);
+    #registerEvents() {
+        this.#registerTwitchEvents(this.twitch);
         // Для остального пока-что заглушки
     }
 
@@ -256,10 +239,8 @@ class NotificationService extends ServiceBase {
      * @returns
      */
     async #respondToDiscord(arg) {
-        /** @type {TwitchNotificationBot} */
-        const app = this.parent;
         /** @type {DiscordService}*/
-        const discord = app.getService(DiscordService);
+        const discord = this.discord;
 
         if (discord) {
             try {
@@ -345,7 +326,7 @@ class NotificationService extends ServiceBase {
      */
     async #respondToTelegram(arg) {
         /** @type {TelegramService} */
-        const telegram = this.parent.getService(TelegramService);
+        const telegram = this.telegram;
         if (telegram) {
             try {
                 const text = this.#pickAnnouncementText(arg.type) ?? "";

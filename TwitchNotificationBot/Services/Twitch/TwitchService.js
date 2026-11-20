@@ -24,43 +24,12 @@ const TwitchService = class TwitchService extends ServiceBase {
         /** @type {AuthToken} */
         this.authToken;
 
-        this.streamMonitorManager = new StreamMonitorManager(60);
-
-        this.setParent();
-    }
-
-    setParent() {
-        for (var property in this) {
-            const pass = this[property] instanceof StreamMonitorManager;
-            if (pass) {
-                this[property].setParent = this.setParent;
-                this[property].setParent();
-                this[property].twitchService = this;
-                delete this[property].setParent;
-            }
-        }
-
-        return this;
+        this.streamMonitorManager = new StreamMonitorManager(60, this);
     }
 
     /**
-     * �������� ���������� ������ �� ��������
-     * @returns {TwitchService}
-     */
-    setParentToManager() {
-        if (this.constructor.name === StreamMonitorManager.constructor.name) return;
-
-        this.streamMonitorManager.setParentToManager = this.setParentToManager;
-        this.streamMonitorManager.setParentToManager();
-        this.streamMonitorManager.twitchService = this;
-        delete this.streamMonitorManager.setParentToManager;
-
-        return this;
-    }
-
-    /**
-     * ������ ������ ������� � ����������� �� �����
-     * @param {String[]} channels ������ �������� �������
+     * 
+     * @param {String[]} channels 
      */
     setChannelsByName(channels) {
         if (channels.length > 20) throw new Error('More then 20 values not supported');
