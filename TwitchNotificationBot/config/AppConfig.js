@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { envFile, settingsFile, migrateLegacyFiles } = require('./AppPaths');
+const { parseTwitchObservation } = require('../twitch/observationSettings');
 
 class AppConfig {
     /**
@@ -34,7 +35,9 @@ class AppConfig {
             telegramRespondChannelId: this.notificationConfig.telegramRespondChannelId ?? '',
             telegramRespondThreadId: this.notificationConfig.telegramRespondThreadId ?? null,
             messagesStartAnnouncement: this.notificationConfig.messagesStartAnnouncement,
-            messagesEndAnnouncement: this.notificationConfig.messagesEndAnnouncement
+            messagesEndAnnouncement: this.notificationConfig.messagesEndAnnouncement,
+            twitchObservation: this.twitchConfig.observation,
+            twitchPollIntervalMinutes: this.twitchConfig.pollIntervalMinutes
         };
 
         try {
@@ -64,6 +67,7 @@ class AppConfig {
         /** @type {Record<string, string>} */
         const env = envExists ? readEnv(envFile) : {};
         const settings = settingsExist ? JSON.parse(fs.readFileSync(settingsFile, 'utf8')) : {};
+        const observation = parseTwitchObservation(settings);
         const guildId = optionalId(settings.discordGuildId);
 
         Object.assign(this, new AppConfig(
@@ -74,7 +78,9 @@ class AppConfig {
             ),
             new TwitchConfig(
                 env.TWITCH_CLIENT_ID ?? '',
-                env.TWITCH_CLIENT_SECRET ?? ''
+                env.TWITCH_CLIENT_SECRET ?? '',
+                observation.strategy,
+                observation.pollIntervalMinutes
             ),
             new TelegramConfig(env.TELEGRAM_BOT_TOKEN ?? ''),
             new NotificationConfig(
@@ -113,12 +119,18 @@ class TwitchConfig {
      * Создает класс с настройками для модуля Twitch.
      * @param {string} [clientId]
      * @param {string} [secretId]
+     * @param {'poll'|'websocket'} [observation]
+     * @param {number} [pollIntervalMinutes]
      */
-    constructor(clientId = '', secretId = '') {
+    constructor(clientId = '', secretId = '', observation = 'poll', pollIntervalMinutes = 1) {
         /** @type {string} */
         this.clientId = clientId;
         /** @type {string} */
         this.secretId = secretId;
+        /** @type {'poll'|'websocket'} */
+        this.observation = observation;
+        /** @type {number} */
+        this.pollIntervalMinutes = pollIntervalMinutes;
     }
 }
 

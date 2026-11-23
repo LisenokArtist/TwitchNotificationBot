@@ -5,5 +5,7 @@
   "telegramRespondChannelId": "",
   "telegramRespondThreadId": null,
   "messagesStartAnnouncement": ["Стрим начался!"],
-  "messagesEndAnnouncement": ["Стрим закончился."]
+  "messagesEndAnnouncement": ["Стрим закончился."],
+  "twitchObservation": "poll",
+  "twitchPollIntervalMinutes": 1
 }
