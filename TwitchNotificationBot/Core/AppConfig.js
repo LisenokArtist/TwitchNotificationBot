@@ -1,14 +1,15 @@
-const path = require('node:path');
 const fs = require('node:fs');
-const filePath = path.join(__dirname, 'AppConfig.json');
+const path = require('node:path');
+const { envFile, settingsFile, migrateLegacyFiles } = require('./AppPaths');
 
 class AppConfig {
     /**
-     * Создает класс с найстройками всего решения
-     * @param {DiscordConfig} discordConfig
-     * @param {TwitchConfig} twitchConfig
-     * @param {TelegramConfig} telegramConfig
-     * @param {NotificationConfig} notificationConfig
+     * Создает класс с настройками всего решения.
+     * Секреты читаются из config/.env, остальные поля из config/settings.json.
+     * @param {DiscordConfig} [discordConfig]
+     * @param {TwitchConfig} [twitchConfig]
+     * @param {TelegramConfig} [telegramConfig]
+     * @param {NotificationConfig} [notificationConfig]
      */
     constructor(discordConfig, twitchConfig, telegramConfig, notificationConfig) {
         /** @type {DiscordConfig} */
@@ -22,13 +23,23 @@ class AppConfig {
     }
 
     /**
-     * Сохраняет файл конфигурации
-     * @returns true если сохранение было успешно
+     * Сохраняет настройки без секретов.
+     * @returns {boolean} true если сохранение было успешно
      */
     save() {
-        const json = JSON.stringify(this);
+        const settings = {
+            discordGuildId: this.discordConfig.guildId || this.notificationConfig.discordGuildId || '',
+            twitchMonitorChannelNames: this.notificationConfig.twitchMonitorChannelNames ?? [],
+            discordRespondChannelId: this.notificationConfig.discordRespondChannelId ?? '',
+            telegramRespondChannelId: this.notificationConfig.telegramRespondChannelId ?? '',
+            telegramRespondThreadId: this.notificationConfig.telegramRespondThreadId ?? null,
+            messagesStartAnnouncement: this.notificationConfig.messagesStartAnnouncement,
+            messagesEndAnnouncement: this.notificationConfig.messagesEndAnnouncement
+        };
+
         try {
-            fs.writeFileSync(filePath, json);
+            fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
+            fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2));
             return true;
         } catch (e) {
             console.log('Unable to save app config file with error: ' + e);
@@ -37,91 +48,101 @@ class AppConfig {
     }
 
     /**
-     * Загружает файл конфигурации
-     * @returns true если загрузка была успешна
+     * Загружает config/.env и config/settings.json.
+     * @returns {boolean} true если загрузка была успешна
      */
     load() {
-        const isExists = fs.existsSync(filePath);
-        if (isExists) {
-            const file = fs.readFileSync(filePath, 'utf8');
-            /** @type {this} */
-            const result = JSON.parse(file);
-            Object.assign(this, new AppConfig(
-                new DiscordConfig(
-                    result?.discordConfig?.token,
-                    result?.discordConfig?.clientId,
-                    result?.discordConfig?.guildId
-                ),
-                new TwitchConfig(
-                    result?.twitchConfig?.clientId,
-                    result?.twitchConfig?.secretId
-                ),
-                new TelegramConfig(
-                    result?.telegramConfig?.token
-                ),
-                new NotificationConfig(
-                    result?.notificationConfig?.twitchMonitorChannelNames,
-                    result?.notificationConfig?.discordGuildId,
-                    result?.notificationConfig?.discordRespondChannelId,
-                    result?.notificationConfig?.telegramRespondChannelId,
-                    result?.notificationConfig?.telegramRespondThreadId,
-                    result?.notificationConfig?.messagesStartAnnouncement,
-                    result?.notificationConfig?.messagesEndAnnouncement
-                )
-            ));
-            return true;
+        migrateLegacyFiles();
+
+        const envExists = fs.existsSync(envFile);
+        const settingsExist = fs.existsSync(settingsFile);
+        if (!envExists && !settingsExist) {
+            console.log(`Config not found. Copy the examples to ${envFile} and ${settingsFile}`);
+            return false;
         }
-        else {
-            console.log('File ' + filePath + ' not found');
-        }
-        return false;
+
+        /** @type {Record<string, string>} */
+        const env = envExists ? readEnv(envFile) : {};
+        const settings = settingsExist ? JSON.parse(fs.readFileSync(settingsFile, 'utf8')) : {};
+        const guildId = optionalId(settings.discordGuildId);
+
+        Object.assign(this, new AppConfig(
+            new DiscordConfig(
+                env.DISCORD_TOKEN ?? '',
+                env.DISCORD_CLIENT_ID ?? '',
+                guildId ?? ''
+            ),
+            new TwitchConfig(
+                env.TWITCH_CLIENT_ID ?? '',
+                env.TWITCH_CLIENT_SECRET ?? ''
+            ),
+            new TelegramConfig(env.TELEGRAM_BOT_TOKEN ?? ''),
+            new NotificationConfig(
+                settings.twitchMonitorChannelNames,
+                guildId ?? '',
+                optionalId(settings.discordRespondChannelId) ?? '',
+                optionalId(settings.telegramRespondChannelId) ?? '',
+                optionalId(settings.telegramRespondThreadId) ?? null,
+                settings.messagesStartAnnouncement,
+                settings.messagesEndAnnouncement
+            )
+        ));
+        return true;
     }
 }
 
 class DiscordConfig {
     /**
-     * Создает класс с настройками для модуля Discord
-     * @param {String} token
-     * @param {String} clientId
-     * @param {String} guildId
+     * Создает класс с настройками для модуля Discord.
+     * @param {string} [token]
+     * @param {string} [clientId]
+     * @param {string} [guildId]
      */
-    constructor(token, clientId, guildId) {
-        /** @type {String} */
+    constructor(token = '', clientId = '', guildId = '') {
+        /** @type {string} */
         this.token = token;
-        /** @type {String} */
+        /** @type {string} */
         this.clientId = clientId;
-        /** @type {String} */
+        /** @type {string} */
         this.guildId = guildId;
     }
 }
 
 class TwitchConfig {
     /**
-     * Создает класс с настройками для модуля Twitch
-     * @param {String} clientId
-     * @param {String} secretId
+     * Создает класс с настройками для модуля Twitch.
+     * @param {string} [clientId]
+     * @param {string} [secretId]
      */
-    constructor(clientId, secretId) {
-        /** @type {String} */
+    constructor(clientId = '', secretId = '') {
+        /** @type {string} */
         this.clientId = clientId;
-        /** @type {String} */
+        /** @type {string} */
         this.secretId = secretId;
     }
 }
 
 class TelegramConfig {
     /**
-     * Создает класс с настройками для модуля Telegram
-     * @param {String} token
-     * @param {Number} chatId
+     * Создает класс с настройками для модуля Telegram.
+     * @param {string} [token]
      */
-    constructor(token) {
-        /** @type {String} */
+    constructor(token = '') {
+        /** @type {string} */
         this.token = token;
     }
 }
 
 class NotificationConfig {
+    /**
+     * @param {string[]} [channels]
+     * @param {string} [discordGuildId]
+     * @param {string} [discordChannelId]
+     * @param {string} [telegramChannelId]
+     * @param {string|null|undefined} [telegramThreadId]
+     * @param {string[]|undefined} [messagesStartAnnouncement]
+     * @param {string[]|undefined} [messagesEndAnnouncement]
+     */
     constructor(
         channels,
         discordGuildId,
@@ -131,23 +152,73 @@ class NotificationConfig {
         messagesStartAnnouncement,
         messagesEndAnnouncement) {
         /** @type {string[]} */
-        this.twitchMonitorChannelNames = channels;
-
-        /** @type {number} */
-        this.discordGuildId = discordGuildId ? Number.parseInt(discordGuildId) : undefined;
-        /** @type {number} */
-        this.discordRespondChannelId = discordChannelId ? Number.parseInt(discordChannelId) : undefined;
-
-        /** @type {number} */
-        this.telegramRespondChannelId = telegramChannelId ? Number.parseInt(telegramChannelId) : undefined;
-        /** @type {number} */
-        this.telegramRespondThreadId = telegramThreadId ? Number.parseInt(telegramThreadId) : undefined;
+        this.twitchMonitorChannelNames = Array.isArray(channels) ? channels : [];
+        /** @type {string} */
+        this.discordGuildId = discordGuildId ?? '';
+        /** @type {string} */
+        this.discordRespondChannelId = discordChannelId ?? '';
+        /** @type {string} */
+        this.telegramRespondChannelId = telegramChannelId ?? '';
+        /** @type {string|null} */
+        this.telegramRespondThreadId = telegramThreadId ?? null;
 
         /** @type {string[]} */
-        this.messagesStartAnnouncement = messagesStartAnnouncement?.length > 0 ? messagesStartAnnouncement : ['Стрим начался!'];
+        this.messagesStartAnnouncement = Array.isArray(messagesStartAnnouncement) && messagesStartAnnouncement.length > 0
+            ? messagesStartAnnouncement
+            : ['Стрим начался!'];
         /** @type {string[]} */
-        this.messagesEndAnnouncement = messagesEndAnnouncement?.length > 0 ? messagesEndAnnouncement : ['Стрим закончился.'];
+        this.messagesEndAnnouncement = Array.isArray(messagesEndAnnouncement) && messagesEndAnnouncement.length > 0
+            ? messagesEndAnnouncement
+            : ['Стрим закончился.'];
     }
+}
+
+/**
+ * @param {string} file
+ * @returns {Record<string, string>}
+ */
+function readEnv(file) {
+    /** @type {Record<string, string>} */
+    const env = {};
+    const text = fs.readFileSync(file, 'utf8');
+
+    for (const line of text.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (trimmed.length === 0 || trimmed.startsWith('#')) {
+            continue;
+        }
+
+        const eq = trimmed.indexOf('=');
+        if (eq === -1) {
+            continue;
+        }
+
+        const key = trimmed.slice(0, eq).trim();
+        let value = trimmed.slice(eq + 1).trim();
+        const quoted = value.length >= 2
+            && ((value.startsWith('"') && value.endsWith('"'))
+                || (value.startsWith("'") && value.endsWith("'")));
+        if (quoted) {
+            value = value.slice(1, -1);
+        }
+
+        env[key] = value;
+    }
+
+    return env;
+}
+
+/**
+ * Оставляет идентификатор строкой: snowflake Discord не помещается в Number.
+ * @param {unknown} value
+ * @returns {string|undefined}
+ */
+function optionalId(value) {
+    if (value === undefined || value === null || value === '') {
+        return undefined;
+    }
+
+    return String(value);
 }
 
 module.exports = { AppConfig, DiscordConfig, TwitchConfig, TelegramConfig, NotificationConfig };

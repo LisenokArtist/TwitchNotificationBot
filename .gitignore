@@ -364,3 +364,6 @@ FodyWeavers.xsd
 /TwitchNotificationBot/Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings.json
 /TwitchNotificationBot/Core/AppConfig.json
 /TwitchNotificationBot/Services/Twitch/AuthToken.json
+/TwitchNotificationBot/config/.env
+/TwitchNotificationBot/config/settings.json
+/TwitchNotificationBot/data/

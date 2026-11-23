@@ -1,0 +1,9 @@
+{
+  "discordGuildId": "",
+  "twitchMonitorChannelNames": [],
+  "discordRespondChannelId": "",
+  "telegramRespondChannelId": "",
+  "telegramRespondThreadId": null,
+  "messagesStartAnnouncement": ["Стрим начался!"],
+  "messagesEndAnnouncement": ["Стрим закончился."]
+}

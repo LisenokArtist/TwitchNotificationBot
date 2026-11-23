@@ -1,7 +1,8 @@
 const { ReactForRoleMessageModel } = require('../../../../Core/Models/ReactForRoleMessageModel')
 const path = require('node:path');
 const fs = require('node:fs');
-const filePath = path.join(__dirname, 'GiveRoleOnReactionSettings.json');
+const { giveRoleSettingsFile, migrateLegacyFiles } = require('../../../../Core/AppPaths');
+const filePath = giveRoleSettingsFile;
 
 const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
     constructor() {
@@ -83,6 +84,7 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
      * @returns {Boolean} True если файл был загружен
      */
     loadSettings() {
+        migrateLegacyFiles();
         const isExist = fs.existsSync(filePath);
         if (isExist) {
             const file = fs.readFileSync(filePath, 'utf8');
@@ -104,6 +106,7 @@ const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {
     saveSettings() {
         const json = JSON.stringify(this);
         try {
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
             fs.writeFileSync(filePath, json);
             return true;
         } catch (e) {

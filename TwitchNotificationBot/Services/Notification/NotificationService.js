@@ -28,14 +28,14 @@ class NotificationService extends ServiceBase {
         /** @type {String[]} */
         this.twitchChannelNames = config.twitchMonitorChannelNames;
 
-        /** @type {Number} */
+        /** @type {string} */
         this.discordGuildId = config.discordGuildId;
-        /** @type {Number} */
+        /** @type {string} */
         this.discordChannelId = config.discordRespondChannelId;
 
-        /** @type {Number} */
+        /** @type {string} */
         this.telegramChannelId = config.telegramRespondChannelId;
-        /** @type {number|null} */
+        /** @type {string|null} */
         this.telegramRespondThreadId = config.telegramRespondThreadId;
 
         /** @type {string[]} */

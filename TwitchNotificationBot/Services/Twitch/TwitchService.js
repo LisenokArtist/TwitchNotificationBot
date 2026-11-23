@@ -1,6 +1,7 @@
-const path = require('node:path');
 const fs = require('node:fs');
-const filePath = path.join(__dirname, 'AuthToken.json');
+const path = require('node:path');
+const { twitchAuthTokenFile, migrateLegacyFiles } = require('../../Core/AppPaths');
+const filePath = twitchAuthTokenFile;
 const { TwitchConfig } = require('../../Core/AppConfig');
 const { ServiceBase } = require('../ServiceBase');
 const { AuthToken } = require('../../Core/Twitch/TwitchModels');
@@ -52,6 +53,7 @@ const TwitchService = class TwitchService extends ServiceBase {
     #saveAuthToken() {
         const json = JSON.stringify(this.authToken);
         try {
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
             fs.writeFileSync(filePath, json);
             return true;
         } catch (e) {
@@ -65,6 +67,7 @@ const TwitchService = class TwitchService extends ServiceBase {
      * @returns true ���� �������� ���� �������
      */
     #loadAuthToken() {
+        migrateLegacyFiles();
         const isExist = fs.existsSync(filePath);
         if (isExist) {
             const file = fs.readFileSync(filePath, 'utf8');

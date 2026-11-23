@@ -23,8 +23,8 @@ class DiscordService extends ServiceBase {
 
     /**
      * ��������� ����� ���� ���������� �����������
-     * @param {number} guildId
-     * @param {number} channelId
+     * @param {string} guildId
+     * @param {string} channelId
      */
     async #updateRespondChannel(guildId, channelId) {
         /** @type {Guild}*/
@@ -40,8 +40,8 @@ class DiscordService extends ServiceBase {
 
     /**
      * �������� �����.
-     * @param {number} guildId
-     * @param {number} channelId
+     * @param {string} guildId
+     * @param {string} channelId
      * @returns {TextChannel}
      */
     async getRespondChannel(guildId, channelId) {
