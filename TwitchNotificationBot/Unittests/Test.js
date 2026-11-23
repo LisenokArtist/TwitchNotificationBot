@@ -119,20 +119,16 @@ describe('TwitchService', function () {
         service.streamMonitorManager.timerInterval = 30;
         await service.streamMonitorManager.setChannelsByName('mnemonicman');
 
-        let ticksLeft = 2;
-
-        service.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, (e) => {
-            console.log(e.description);
-        });
-        service.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded, (e) => {
-            console.log(e.description);
-        });
-        service.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, (e) => {
-            console.log(e.description);
-        });
-        service.streamMonitorManager.on(StreamMonitorEventProvider.OnTimerTick, (e) => {
-            console.log(e);
-            ticksLeft--;
+        service.streamMonitorManager.setObserver({
+            onStreamUpdated(streams) {
+                console.log(streams);
+            },
+            onStreamEnded(streams) {
+                console.log(streams);
+            },
+            onStreamStarted(streams) {
+                console.log(streams);
+            },
         });
 
         this.timeout(10 * 1000);
@@ -208,6 +204,7 @@ describe('Telegram', function () {
         const appConfig = new AppConfig();
         appConfig.load();
         const app = new TwitchNotificationBot(appConfig);
+        await app.telegramService.Start();
         await app.telegramService.client.sendMessage(
             appConfig.notificationConfig.telegramRespondChannelId,
             "Unit test respond message async status result");
@@ -216,6 +213,7 @@ describe('Telegram', function () {
         const appConfig = new AppConfig();
         appConfig.load();
         const app = new TwitchNotificationBot(appConfig);
+        await app.telegramService.Start();
         await app.telegramService.client.sendPhoto(
             appConfig.notificationConfig.telegramRespondChannelId,
             'https://lisenokartist.ddns.net/Resources/Avatars/Rosy_x25.png'

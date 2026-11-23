@@ -1,10 +1,7 @@
 const { ServiceBase } = require('../ServiceBase');
-const { StreamMonitorEventProvider, OnStreamEventArgs } = require('../Twitch/StreamMonitorManager');
 const { NotificationConfig } = require('../../Core/AppConfig');
-const { KeyValuePair } = require('../../Core/Collections/KeyValuePair');
-const { Dictionary } = require('../../Core/Collections/Dictionary/Dictionary');
+const { Queue } = require('../../Core/Collections/Queue');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
-const { PairedQueie } = require('../../Core/Collections/PairedQueie/PairedQueie');
 const { EmbedBuilder, User } = require('discord.js');
 /** @typedef {import('../Twitch/TwitchService').TwitchService} TwitchService */
 /** @typedef {import('../Discord/DiscordService').DiscordService} DiscordService */
@@ -51,29 +48,21 @@ class NotificationService extends ServiceBase {
         /** @type {Number} */
         this.retryInSeconds = 60;
 
-        /** @type {PairedQueie} */
-        this.queie = new PairedQueie();
-
-        /** @type {Dictionary}*/
-        this.toTelegramNotificationQueie = new Dictionary();
-        /** @type {Dictionary}*/
-        this.toDiscordNotificationQueie = new Dictionary();
+        /** @type {Queue<NotificationRespond>} */
+        this.queue = new Queue();
 
         /** @type {NodeJS.Timeout|null}*/
         this.timer = null;
-        /** @type {Boolean} */
-        this.isEventsRegistered = false;
     }
 
     async Start() {
+        if (this.isInitializated) {
+            return;
+        }
+
         // Пропускаем инициализацию
         this.isInitializated = true;
-
-        if (!this.isEventsRegistered) {
-            this.#registerSettings();
-            this.#registerEvents();
-            this.isEventsRegistered = true;
-        }
+        this.#registerSettings();
     }
 
     async Stop() {
@@ -88,41 +77,39 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * Регистрирует события
+     * Стрим начался.
+     * @param {StreamResponse[]} streams
      */
-    #registerEvents() {
-        this.#registerTwitchEvents(this.twitch);
-        // Для остального пока-что заглушки
-    }
-
-    /** @param {TwitchService} twitch */
-    #registerTwitchEvents(twitch) {
-        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamStarted, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamStarted));
-        //Событие по обновлению стримов оставим на потом. Нужно будет добавить возможность обновлять отправляемую запись в чат.
-        //twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamUpdated, e => this.#onStream(e, StreamMonitorEventProvider.OnStreamUpdated));
-        twitch.streamMonitorManager.on(StreamMonitorEventProvider.OnStreamEnded,   e => this.#onStream(e, StreamMonitorEventProvider.OnStreamEnded));
+    onStreamStarted(streams) {
+        this.#onStreamStatus(streams, 'is now live', () => this.#streamIsStarted(streams));
     }
 
     /**
-     * Срабатывает если статус стрима изменен
-     * @param {OnStreamEventArgs[]} eventArgs
-     * @param {StreamMonitorEventProvider} event
+     * Данные стрима обновились.
+     * Уведомление не отправляется: нужно обновлять уже отправленную запись в чате.
+     * @param {StreamResponse[]} streams
      */
-    #onStream(eventArgs, event) {
+    onStreamUpdated(streams) {
+    }
+
+    /**
+     * Стрим завершился.
+     * @param {StreamResponse[]} streams
+     */
+    onStreamEnded(streams) {
+        this.#onStreamStatus(streams, 'is now offline', () => this.#streamIsEnded(streams));
+    }
+
+    /**
+     * Ставит стримы в очередь и пишет статус в лог.
+     * @param {StreamResponse[]} streams
+     * @param {string} statusText
+     * @param {() => void} enqueue
+     */
+    #onStreamStatus(streams, statusText, enqueue) {
         try {
-            const streams = eventArgs.map(x => x.stream);
-            switch (event) {
-                case (StreamMonitorEventProvider.OnStreamStarted):
-                    this.#streamIsStarted(streams);
-                    break;
-                case (StreamMonitorEventProvider.OnStreamUpdated):
-                    this.#streamIsUpdated(streams);
-                    break;
-                case (StreamMonitorEventProvider.OnStreamEnded):
-                    this.#streamIsEnded(streams);
-                    break;
-            }
-            console.log(eventArgs.map(x => x.description).join(', '));
+            enqueue();
+            console.log(streams.map(s => `Stream of ${s.user_name} ${statusText}`).join(', '));
         } catch (e) {
             console.log(`Unexpected error onStream event: ${e}`);
         } finally {
@@ -164,7 +151,9 @@ class NotificationService extends ServiceBase {
      * @param {StreamResponse[]} streams
      */
     #addToQueie(type, target, streams) {
-        this.queie.pushes(streams.map(x => new KeyValuePair(target, new NotificationRespond(type, target, x))));
+        for (const stream of streams) {
+            this.queue.enqueue(new NotificationRespond(type, target, stream));
+        }
     }
 
     /**
@@ -172,17 +161,17 @@ class NotificationService extends ServiceBase {
      * @returns {Boolean} True если запуск был успешным
      */
     #tryStartTimer() {
-        const isEmpty = !this.queie.collection.length > 0;
-
-        if (!isEmpty && !this.timer) {
-            this.timer = setTimeout(() => {
-                clearTimeout(this.timer);
-                this.timer = null;
-                this.#onTimerCallback();
-            }, this.retryInSeconds * 1000);
-            return true;
+        if (this.queue.length === 0 || this.timer) {
+            return false;
         }
-        return false;
+
+        const timer = setTimeout(() => {
+            clearTimeout(timer);
+            this.timer = null;
+            this.#onTimerCallback();
+        }, this.retryInSeconds * 1000);
+        this.timer = timer;
+        return true;
     }
 
 
@@ -191,14 +180,13 @@ class NotificationService extends ServiceBase {
      * @returns {boolean} True если остановка была успешна
      */
     #tryStopTimer() {
-        const isEmpty = !this.queie.collection.length > 0;
+        if (this.queue.length > 0 || !this.timer) {
+            return false;
+        }
 
-        if (isEmpty && this.timer) {
-            clearTimeout(this.timer);
-            this.timer = null;
-            return true;
-        };
-        return false;
+        clearTimeout(this.timer);
+        this.timer = null;
+        return true;
     }
 
     /**
@@ -207,24 +195,27 @@ class NotificationService extends ServiceBase {
     async #onTimerCallback() {
         try {
             do {
-                let result = false;
+                const item = this.queue.peek();
+                if (!item) {
+                    break;
+                }
 
-                const item = this.queie.collection[0];
-                switch (item.key) {
+                let result = false;
+                switch (item.respondTo) {
                     case NotificationRespondProvider.ToDiscord:
-                        result = await this.#respondToDiscord(item.value);
+                        result = await this.#respondToDiscord(item);
                         break;
                     case NotificationRespondProvider.ToTelegram:
-                        result = await this.#respondToTelegram(item.value);
+                        result = await this.#respondToTelegram(item);
                         break;
                 }
 
-                if (result) {
-                    this.queie.collection.shift();
-                } else {
+                if (!result) {
                     throw new Error('Respond not passed');
                 }
-            } while (this.queie.collection.length > 0);
+
+                this.queue.dequeue();
+            } while (this.queue.length > 0);
             this.#tryStopTimer();
         }
         catch (e) {
@@ -327,7 +318,7 @@ class NotificationService extends ServiceBase {
     async #respondToTelegram(arg) {
         /** @type {TelegramService} */
         const telegram = this.telegram;
-        if (telegram) {
+        if (telegram && telegram.client) {
             try {
                 const text = this.#pickAnnouncementText(arg.type) ?? "";
                 switch (arg.type) {
@@ -453,10 +444,4 @@ const NotificationTypeProvider = {
     Ended: 'remove'
 }
 
-const NotificationEventProvider = {
-    OnStreamStarted: StreamMonitorEventProvider.OnStreamStarted,
-    OnStreamUpdated: StreamMonitorEventProvider.OnStreamUpdated,
-    OnStreamEnded: StreamMonitorEventProvider.OnStreamEnded
-}
-
-module.exports = { NotificationService, NotificationRespond, NotificationRespondProvider, NotificationTypeProvider, NotificationEventProvider }
+module.exports = { NotificationService, NotificationRespond, NotificationRespondProvider, NotificationTypeProvider }

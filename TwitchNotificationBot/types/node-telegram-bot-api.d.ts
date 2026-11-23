@@ -20,6 +20,7 @@ declare class TelegramBot {
         extra?: Record<string, unknown>
     ): Promise<unknown>;
     isPolling(): boolean;
+    stopPolling(options?: { cancel?: boolean; reason?: string }): Promise<void>;
     on(event: string, handler: (...args: unknown[]) => void): void;
 }
 

@@ -10,17 +10,39 @@ const TelegramService = class TelegramService extends ServiceBase {
         /** @type {String} */
         this.token = config.token;
 
-        this.client = new TelegramBot(this.token, { polling: true });
+        // Клиент создаётся в Start: пустой токен не должен запускать polling.
+        /** @type {TelegramBot | null} */
+        this.client = null;
     }
 
     async Start() {
-        // Пропускаем инициализацию
+        if (this.isInitializated) {
+            return;
+        }
+
+        if (!this.token) {
+            console.log('TelegramService skipped: token is empty');
+            this.isInitializated = true;
+            return;
+        }
+
+        this.client = new TelegramBot(this.token, { polling: true });
         this.isInitializated = true;
-        console.log('TelegramServise is not require to start');
     }
 
     async Stop() {
-        console.log('TelegramServise is not require to stop');
+        if (!this.client) {
+            return;
+        }
+
+        try {
+            await this.client.stopPolling();
+        } catch (e) {
+            console.log(`TelegramService stop failed: ${e}`);
+        }
+
+        this.client = null;
+        this.isInitializated = false;
     }
 }
 

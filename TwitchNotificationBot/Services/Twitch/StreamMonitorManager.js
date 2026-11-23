@@ -1,16 +1,14 @@
-const { EventEmitter } = require('node:events');
 const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels')
 /** @typedef {import('./TwitchService').TwitchService} TwitchService */
+/** @typedef {import('../../Core/StreamObserver').StreamObserver} StreamObserver */
 
-const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
+const StreamMonitorManager = class StreamMonitorManager {
     /**
      * �������������� ����� ��������� �������, ������� ����������� �� ������
      * @param {TwitchService} twitchService �������� ������, �������� ����������� ��������
      * @param {Number} checkIntervalInSeconds ��� ����� ����� ���������� ����� �������� ������� � ��������
      */
     constructor(checkIntervalInSeconds, twitchService) {
-        super();
-
         /** @type { TwitchService } */
         this.twitchService = twitchService;
         /** @type { Number } */
@@ -22,6 +20,18 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
         this.liveStreams = [];
 
         this.timerInterval = null;
+    }
+
+    /** @type {StreamObserver | null} */
+    #observer = null;
+
+    /**
+     * Назначает наблюдателя событий стрима.
+     * Повторный вызов заменяет предыдущего. null отписывает.
+     * @param {StreamObserver | null} observer
+     */
+    setObserver(observer) {
+        this.#observer = observer;
     }
 
     /** ������������� ������ �������� ������������� ������� */
@@ -52,23 +62,16 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
             throw new Error('Channels not set');
 
         this.monitoredChannels = names;
-
-        this.emit(StreamMonitorEventProvider.OnMonitoredChannelsUpdated,
-            'Monitored channels is updated');
     }
 
     /** ������� ������ �������, ������� ������������� */
     clearChannels() {
         this.monitoredChannels = new Array();
-
-        this.emit(StreamMonitorEventProvider.OnMonitoredChannelsUpdated,
-            'Monitored channels is cleared');
     }
 
     /** ������� ������� */
     async onTimerCallback() {
         try {
-            this.emit(StreamMonitorEventProvider.OnTimerTick, 'On timer tick');
             await this.#updateLiveStreamAsync();
         } catch (e) {
             console.log(`Unable update streams with error: ${e}`);
@@ -162,13 +165,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
      * @param {StreamPair[]} streams
      */
     #emitStreamsStarted(streams) {
-        if (streams.length > 0) {
-            this.emit(StreamMonitorEventProvider.OnStreamStarted,
-                streams.map(s => new OnStreamEventArgs(
-                    s.user_login,
-                    s.stream,
-                    `Stream of ${s.stream.user_name} is now live`)));
-        }
+        this.#notify(streams, observer => observer.onStreamStarted(streams.map(pair => pair.stream)));
     }
 
     /**
@@ -179,13 +176,7 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
      * @param {StreamPair[]} streams
      */
     #emitStreamsUpdated(streams) {
-        if (streams.length > 0) {
-            this.emit(StreamMonitorEventProvider.OnStreamUpdated,
-                streams.map(s => new OnStreamEventArgs(
-                    s.user_login,
-                    s.stream,
-                    `Stream of ${s.stream.user_name} is updated`)));
-        }
+        this.#notify(streams, observer => observer.onStreamUpdated(streams.map(pair => pair.stream)));
     }
 
     /**
@@ -193,13 +184,26 @@ const StreamMonitorManager = class StreamMonitorManager extends EventEmitter {
      * @param {StreamPair[]} streams
      */
     #emitStreamsEnded(streams) {
-        if (streams.length > 0) {
-            this.emit(StreamMonitorEventProvider.OnStreamEnded,
-                streams.map(s => new OnStreamEventArgs(
-                    s.user_login,
-                    s.stream,
-                    `Stream of ${s.stream.user_name} is now offline`)))
+        this.#notify(streams, observer => observer.onStreamEnded(streams.map(pair => pair.stream)));
+    }
+
+    /**
+     * Передаёт пары стримов наблюдателю.
+     * Пустой список и отсутствие наблюдателя пропускаются.
+     * @param {StreamPair[]} pairs
+     * @param {(observer: StreamObserver) => void} notify
+     */
+    #notify(pairs, notify) {
+        if (pairs.length === 0) {
+            return;
         }
+
+        const observer = this.#observer;
+        if (!observer) {
+            return;
+        }
+
+        notify(observer);
     }
 }
 
@@ -210,29 +214,4 @@ const StreamPair = function StreamPair(user_login, stream) {
     this.stream = stream;
 }
 
-const OnStreamEventArgs = class OnStreamEventArgs {
-    /**
-     * ������� EventArgs ����� ��� ������� ��������� ������� ������
-     * @param {String} channel �������� ������
-     * @param {StreamResponse} stream ������ � ������
-     * @param {String} description �������� �������
-     */
-    constructor(channel, stream, description = '') {
-        /** @type {String} */
-        this.channel = channel;
-        /** @type {StreamResponse}*/
-        this.stream = stream;
-        /** @type {String} */
-        this.description = description;
-    }
-}
-
-const StreamMonitorEventProvider = {
-    OnMonitoredChannelsUpdated: 'onChannelsSet',
-    OnTimerTick: 'onTimerTick',
-    OnStreamStarted: 'onStreamStarted',
-    OnStreamUpdated: 'onStreamUpdated',
-    OnStreamEnded: 'onStreamEnded'
-}
-
-module.exports = { StreamMonitorManager, OnStreamEventArgs, StreamMonitorEventProvider }
+module.exports = { StreamMonitorManager }

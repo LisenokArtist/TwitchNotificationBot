@@ -22,6 +22,9 @@ class TwitchNotificationBot {
             this.telegramService
         );
 
+        // До Start, чтобы первый тик таймера не потерял событие.
+        this.twitchService.setStreamObserver(this.notificationService);
+
         /** @type {ServiceBase[]} */
         this.services = [
             this.twitchService,

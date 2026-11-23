@@ -6,6 +6,7 @@ const { ServiceBase } = require('../ServiceBase');
 const { AuthToken } = require('../../Core/Twitch/TwitchModels');
 const { TokenResponse, StreamsResponse, StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
 const { StreamMonitorManager } = require('./StreamMonitorManager');
+/** @typedef {import('../../Core/StreamObserver').StreamObserver} StreamObserver */
 const ingestUrl = "https://ingest.twitch.tv";
 const helixUrl = "https://api.twitch.tv/helix";
 
@@ -34,6 +35,14 @@ const TwitchService = class TwitchService extends ServiceBase {
     setChannelsByName(channels) {
         if (channels.length > 20) throw new Error('More then 20 values not supported');
         this.streamMonitorManager.setChannelsByName(channels);
+    }
+
+    /**
+     * Подписывает наблюдателя на события мониторинга стримов.
+     * @param {StreamObserver | null} observer
+     */
+    setStreamObserver(observer) {
+        this.streamMonitorManager.setObserver(observer);
     }
 
     /**
