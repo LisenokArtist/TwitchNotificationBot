@@ -4,8 +4,8 @@ const fs = require('node:fs');
 const { CommandInteraction } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord.js');
-const { DiscordConfig } = require('../../Core/AppConfig');
-const { InteractionCommand } = require('../../Core/InteractionCommand');
+const { DiscordConfig } = require('../../config/AppConfig');
+const { InteractionCommand } = require('./InteractionCommand');
 const { ServiceBase } = require('../ServiceBase');
 const { Guild, TextChannel } = require('discord.js');
 

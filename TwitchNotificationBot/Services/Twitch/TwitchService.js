@@ -1,13 +1,13 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { twitchAuthTokenFile, migrateLegacyFiles } = require('../../Core/AppPaths');
+const { twitchAuthTokenFile, migrateLegacyFiles } = require('../../config/AppPaths');
 const filePath = twitchAuthTokenFile;
-const { TwitchConfig } = require('../../Core/AppConfig');
+const { TwitchConfig } = require('../../config/AppConfig');
 const { ServiceBase } = require('../ServiceBase');
-const { AuthToken } = require('../../Core/Twitch/TwitchModels');
-const { TokenResponse, StreamsResponse, StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
+const { AuthToken } = require('../../domain/twitch/TwitchModels');
+const { TokenResponse, StreamsResponse, StreamResponse } = require('../../domain/twitch/TwitchApiModels');
 const { StreamMonitorManager } = require('./StreamMonitorManager');
-/** @typedef {import('../../Core/StreamObserver').StreamObserver} StreamObserver */
+/** @typedef {import('../../ports/StreamObserver').StreamObserver} StreamObserver */
 const ingestUrl = "https://ingest.twitch.tv";
 const helixUrl = "https://api.twitch.tv/helix";
 

@@ -1,7 +1,7 @@
 const { ServiceBase } = require('../ServiceBase');
-const { NotificationConfig } = require('../../Core/AppConfig');
-const { Queue } = require('../../Core/Collections/Queue');
-const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels');
+const { NotificationConfig } = require('../../config/AppConfig');
+const { Queue } = require('../../domain/Queue');
+const { StreamResponse } = require('../../domain/twitch/TwitchApiModels');
 const { EmbedBuilder, User } = require('discord.js');
 /** @typedef {import('../Twitch/TwitchService').TwitchService} TwitchService */
 /** @typedef {import('../Discord/DiscordService').DiscordService} DiscordService */

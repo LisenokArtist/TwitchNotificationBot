@@ -1,4 +1,4 @@
-/** @typedef {import('./Twitch/TwitchApiModels').StreamResponse} StreamResponse */
+/** @typedef {import('../domain/twitch/TwitchApiModels').StreamResponse} StreamResponse */
 
 /**
  * Наблюдатель за стартом, обновлением и завершением стримов.

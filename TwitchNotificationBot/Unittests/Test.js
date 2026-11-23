@@ -1,15 +1,15 @@
-﻿const { GiveRoleOnReactionSettings } = require('../Services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
+﻿const { GiveRoleOnReactionSettings } = require('../services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
 
-//const { TwitchService } = require('../Services/Twitch/TwitchService');
-//const { StreamMonitorEventProvider } = require('../Services/Twitch/StreamMonitorManager');
-//const { DiscordService } = require('../Services/Discord/DiscordService');
-/*const { NotificationService } = require('../Services/Notification/NotificationService');*/
-//const { StreamResponse } = require('../Core/Twitch/TwitchApiModels');
+//const { TwitchService } = require('../services/Twitch/TwitchService');
+//const { StreamMonitorEventProvider } = require('../services/Twitch/StreamMonitorManager');
+//const { DiscordService } = require('../services/Discord/DiscordService');
+/*const { NotificationService } = require('../services/Notification/NotificationService');*/
+//const { StreamResponse } = require('../domain/twitch/TwitchApiModels');
 //const { TwitchNotificationBot } = require('../TwitchNotificationBot');
-//const { NotificationTypeProvider, NotificationService } = require('../Services/Notification/NotificationService');
-const { AppConfig, DiscordConfig, TwitchConfig } = require('../Core/AppConfig');
-const { TelegramService } = require('../Services/Telegram/TelegramService');
-const { DiscordService } = require('../Services/Discord/DiscordService');
+//const { NotificationTypeProvider, NotificationService } = require('../services/Notification/NotificationService');
+const { AppConfig, DiscordConfig, TwitchConfig } = require('../config/AppConfig');
+const { TelegramService } = require('../services/Telegram/TelegramService');
+const { DiscordService } = require('../services/Discord/DiscordService');
 const conf = new AppConfig(); conf.load();
 
 

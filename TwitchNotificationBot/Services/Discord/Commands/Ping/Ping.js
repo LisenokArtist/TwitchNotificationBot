@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { InteractionCommand } = require('../../../../Core/InteractionCommand');
+const { InteractionCommand } = require('../../InteractionCommand');
 const { CommandInteraction } = require('discord.js');
 
 const PingCommand = new InteractionCommand(

@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.2191419">
   <ItemGroup>
-    <None Remove="Services\Discord\CommandSettings\GiveRoleOnReaction\GiveRoleOnReactionSettings.json" />
+    <None Remove="services\Discord\CommandSettings\GiveRoleOnReaction\GiveRoleOnReactionSettings.json" />
   </ItemGroup>
   <PropertyGroup>
-    <JavaScriptTestRoot>Unittests\</JavaScriptTestRoot>
+    <JavaScriptTestRoot>unittests\</JavaScriptTestRoot>
     <JavaScriptTestFramework>Mocha</JavaScriptTestFramework>
   </PropertyGroup>
 </Project>

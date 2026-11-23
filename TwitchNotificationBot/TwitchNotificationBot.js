@@ -1,9 +1,9 @@
-const { AppConfig } = require('./Core/AppConfig');
-const { ServiceBase } = require('./Services/ServiceBase');
-const { TwitchService } = require('./Services/Twitch/TwitchService');
-const { DiscordService } = require('./Services/Discord/DiscordService');
-const { TelegramService } = require('./Services/Telegram/TelegramService');
-const { NotificationService } = require('./Services/Notification/NotificationService');
+const { AppConfig } = require('./config/AppConfig');
+const { ServiceBase } = require('./services/ServiceBase');
+const { TwitchService } = require('./services/Twitch/TwitchService');
+const { DiscordService } = require('./services/Discord/DiscordService');
+const { TelegramService } = require('./services/Telegram/TelegramService');
+const { NotificationService } = require('./services/Notification/NotificationService');
 
 class TwitchNotificationBot {
     /**

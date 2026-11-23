@@ -20,6 +20,6 @@
   "exclude": [
     "node_modules",
     "TwitchNotificationBot/node_modules",
-    "TwitchNotificationBot/Unittests"
+    "TwitchNotificationBot/unittests"
   ]
 }

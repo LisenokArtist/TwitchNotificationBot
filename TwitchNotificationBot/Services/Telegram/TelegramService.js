@@ -1,6 +1,6 @@
 const { ServiceBase } = require('../ServiceBase');
 const TelegramBot = require('node-telegram-bot-api');
-const { TelegramConfig } = require('../../Core/AppConfig');
+const { TelegramConfig } = require('../../config/AppConfig');
 
 const TelegramService = class TelegramService extends ServiceBase {
     /** @param {TelegramConfig} config */

@@ -1,7 +1,7 @@
-const { ReactForRoleMessageModel } = require('../../../../Core/Models/ReactForRoleMessageModel')
+const { ReactForRoleMessageModel } = require('../../../../domain/discord/ReactForRoleMessageModel')
 const path = require('node:path');
 const fs = require('node:fs');
-const { giveRoleSettingsFile, migrateLegacyFiles } = require('../../../../Core/AppPaths');
+const { giveRoleSettingsFile, migrateLegacyFiles } = require('../../../../config/AppPaths');
 const filePath = giveRoleSettingsFile;
 
 const GiveRoleOnReactionSettings = class GiveRoleOnReactionSettings {

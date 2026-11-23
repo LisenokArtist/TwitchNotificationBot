@@ -8,11 +8,11 @@ const settingsFile = path.join(root, 'config', 'settings.json');
 const twitchAuthTokenFile = path.join(root, 'data', 'twitch-auth-token.json');
 const giveRoleSettingsFile = path.join(root, 'data', 'give-role-on-reaction.json');
 
-const legacyAppConfigFile = path.join(__dirname, 'AppConfig.json');
-const legacyAuthTokenFile = path.join(root, 'Services', 'Twitch', 'AuthToken.json');
+const legacyAppConfigFile = path.join(root, 'Core', 'AppConfig.json');
+const legacyAuthTokenFile = path.join(root, 'services', 'Twitch', 'AuthToken.json');
 const legacyGiveRoleBesideClass = path.join(
     root,
-    'Services',
+    'services',
     'Discord',
     'CommandSettings',
     'GiveRoleOnReaction',

@@ -1,6 +1,6 @@
-const { StreamResponse } = require('../../Core/Twitch/TwitchApiModels')
+const { StreamResponse } = require('../../domain/twitch/TwitchApiModels')
 /** @typedef {import('./TwitchService').TwitchService} TwitchService */
-/** @typedef {import('../../Core/StreamObserver').StreamObserver} StreamObserver */
+/** @typedef {import('../../ports/StreamObserver').StreamObserver} StreamObserver */
 
 const StreamMonitorManager = class StreamMonitorManager {
     /**

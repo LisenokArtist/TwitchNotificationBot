@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
-const { InteractionCommand } = require('../../../../Core/InteractionCommand');
+const { InteractionCommand } = require('../../InteractionCommand');
 const { CommandInteraction, MessageFlags, Client, MessageReaction, Message, TextChannel } = require('discord.js');
 const { GiveRoleOnReactionSettings } = require('../../CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
 
