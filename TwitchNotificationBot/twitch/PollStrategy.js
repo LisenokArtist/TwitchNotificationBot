@@ -1,5 +1,5 @@
 const { ObservationStrategy } = require('./ObservationStrategy');
-const { assertPollInterval } = require('./observationSettings');
+const { assertPollInterval, assertPreviewRefresh } = require('./observationSettings');
 /** @typedef {import('../domain/twitch/TwitchApiModels').StreamResponse} StreamResponse */
 /** @typedef {import('../ports/StreamObserver').StreamObserver} StreamObserver */
 /** @typedef {import('./TwitchClient').TwitchClient} TwitchClient */
@@ -11,27 +11,42 @@ const { assertPollInterval } = require('./observationSettings');
  * @property {() => void} stop
  */
 
+/**
+ * @typedef {object} PollStrategyOptions
+ * @property {IntervalClock} [clock]
+ * @property {number} [previewRefreshMinutes]
+ * @property {() => number} [now]
+ */
+
 const MINUTE_MS = 60 * 1000;
 
 /**
- * Опрос Helix. Интервал не меньше одной минуты.
+ * Опрос Helix. Интервал не меньше 10 минут.
+ * Если название или игра изменились, наблюдатель получает обновление сразу.
+ * Если они не менялись дольше заданного промежутка, обновление всё равно уходит,
+ * чтобы получатель мог заменить прикреплённое превью.
  * Ошибочный ответ не считается концом стрима и не останавливает следующий опрос.
  */
 class PollStrategy extends ObservationStrategy {
     /**
      * @param {TwitchClient} client
      * @param {number} intervalMinutes
-     * @param {IntervalClock} [clock]
+     * @param {PollStrategyOptions} [options]
      */
-    constructor(client, intervalMinutes, clock) {
+    constructor(client, intervalMinutes, options) {
         super();
         assertPollInterval(intervalMinutes);
+        const previewRefreshMinutes = assertPreviewRefresh(options?.previewRefreshMinutes ?? 10);
         /** @type {TwitchClient} */
         this.#client = client;
         /** @type {number} */
         this.#intervalMs = intervalMinutes * MINUTE_MS;
+        /** @type {number} */
+        this.#previewRefreshMs = previewRefreshMinutes * MINUTE_MS;
         /** @type {IntervalClock} */
-        this.#clock = clock ?? new DefaultClock();
+        this.#clock = options?.clock ?? new DefaultClock();
+        /** @type {() => number} */
+        this.#now = options?.now ?? Date.now;
     }
 
     /** @type {TwitchClient} */
@@ -40,6 +55,12 @@ class PollStrategy extends ObservationStrategy {
     #intervalMs;
     /** @type {IntervalClock} */
     #clock;
+    /** @type {number} */
+    #previewRefreshMs;
+    /** @type {() => number} */
+    #now;
+    /** @type {Map<string, number>} */
+    #shownAt = new Map();
     /** @type {string[]} */
     #logins = [];
     /** @type {StreamObserver | null} */
@@ -121,15 +142,16 @@ class PollStrategy extends ObservationStrategy {
             seen.add(key);
             const previous = this.#live.get(key);
             if (status.isLive && status.stream) {
+                const changed = previous ? !sameStream(previous, status.stream) : false;
                 if (!previous) {
-                    this.#live.set(key, status.stream);
+                    this.#remember(key, status.stream);
                     started.push(status.stream);
-                } else if (!sameStream(previous, status.stream)) {
-                    this.#live.set(key, status.stream);
+                } else if (changed || this.#previewIsDue(key)) {
+                    this.#remember(key, status.stream);
                     updated.push(status.stream);
                 }
             } else if (previous) {
-                this.#live.delete(key);
+                this.#forget(key);
                 ended.push(previous);
             }
         }
@@ -139,13 +161,45 @@ class PollStrategy extends ObservationStrategy {
                 continue;
             }
 
-            this.#live.delete(key);
+            this.#forget(key);
             ended.push(stream);
         }
 
         this.#emitStarted(started);
         this.#emitUpdated(updated);
         this.#emitEnded(ended);
+    }
+
+    /**
+     * @param {string} key
+     * @param {StreamResponse} stream
+     */
+    #remember(key, stream) {
+        this.#live.set(key, stream);
+        this.#shownAt.set(key, this.#now());
+    }
+
+    /**
+     * @param {string} key
+     */
+    #forget(key) {
+        this.#live.delete(key);
+        this.#shownAt.delete(key);
+    }
+
+    /**
+     * Превью пора заменить, даже если название и игра те же.
+     * Смена названия или игры сбрасывает этот отсчёт.
+     * @param {string} key
+     * @returns {boolean}
+     */
+    #previewIsDue(key) {
+        const shownAt = this.#shownAt.get(key);
+        if (shownAt === undefined) {
+            return true;
+        }
+
+        return this.#now() - shownAt >= this.#previewRefreshMs;
     }
 
     /**

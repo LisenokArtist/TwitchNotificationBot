@@ -298,31 +298,37 @@ describe('Twitch observation', function () {
     });
 
     it('rejects an interval below one minute and unknown strategies', function () {
-        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 0 }), /не меньше 1/);
-        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 0.5 }), /не меньше 1/);
-        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: '1' }), /не меньше 1/);
+        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 0 }), /не меньше 10/);
+        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 1 }), /не меньше 10/);
+        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 9 }), /не меньше 10/);
+        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: '10' }), /не меньше 10/);
+        assert.throws(() => parseTwitchObservation({ twitchPreviewRefreshMinutes: 5 }), /не меньше 10/);
         assert.throws(() => parseTwitchObservation({ twitchObservation: 'webhook' }), /poll или websocket/);
         assert.deepEqual(parseTwitchObservation({}), {
             strategy: 'poll',
-            pollIntervalMinutes: 1
+            pollIntervalMinutes: 10,
+            previewRefreshMinutes: 10
         });
-        assert.deepEqual(parseTwitchObservation({ twitchPollIntervalMinutes: 2 }), {
+        assert.deepEqual(parseTwitchObservation({ twitchPollIntervalMinutes: 15 }), {
             strategy: 'poll',
-            pollIntervalMinutes: 2
+            pollIntervalMinutes: 15,
+            previewRefreshMinutes: 10
         });
         assert.deepEqual(parseTwitchObservation({
             twitchObservation: 'websocket',
-            twitchPollIntervalMinutes: 10
+            twitchPollIntervalMinutes: 10,
+            twitchPreviewRefreshMinutes: 30
         }), {
             strategy: 'websocket',
-            pollIntervalMinutes: 10
+            pollIntervalMinutes: 10,
+            previewRefreshMinutes: 30
         });
 
         const tokenFile = tempTokenFile();
         files.push(tokenFile);
         const { client } = clientWith(tokenFile, () => tokenResponse('token-a'));
-        assert.throws(() => new PollStrategy(client, 0.5), /не меньше 1/);
-        assert.doesNotThrow(() => new PollStrategy(client, 2, { every() {}, stop() {} }));
+        assert.throws(() => new PollStrategy(client, 1), /не меньше 10/);
+        assert.doesNotThrow(() => new PollStrategy(client, 10, { clock: { every() {}, stop() {} } }));
     });
 
     it('reports start, update and end, and keeps the previous stream when helix fails', async function () {
@@ -347,7 +353,7 @@ describe('Twitch observation', function () {
             return jsonResponse(200, page ?? { data: [] });
         });
         const clock = manualClock();
-        const strategy = new PollStrategy(client, 1, clock.clock);
+        const strategy = new PollStrategy(client, 10, { clock: clock.clock, previewRefreshMinutes: 30 });
         /** @type {string[]} */
         const events = [];
         const observer = {
@@ -381,6 +387,67 @@ describe('Twitch observation', function () {
             'started:Hello',
             'updated:Next',
             'ended:Next'
+        ]);
+    });
+
+    it('emits an update when the preview interval elapses and when the title changes', async function () {
+        const tokenFile = tempTokenFile();
+        files.push(tokenFile);
+        /** @type {Record<string, unknown>[]} */
+        const pages = [
+            { data: [helixStream('Hello')] },
+            { data: [helixStream('Hello')] },
+            { data: [helixStream('Hello')] },
+            { data: [helixStream('Next', 'Just Chatting')] },
+            { data: [helixStream('Next', 'Just Chatting')] }
+        ];
+        const { client } = clientWith(tokenFile, (url) => {
+            if (url.includes('/oauth2/token')) {
+                return tokenResponse('token-a');
+            }
+
+            return jsonResponse(200, pages.shift() ?? { data: [] });
+        });
+        const clock = manualClock();
+        let now = 0;
+        const minute = 60 * 1000;
+        const strategy = new PollStrategy(client, 10, {
+            clock: clock.clock,
+            previewRefreshMinutes: 10,
+            now: () => now
+        });
+        /** @type {string[]} */
+        const events = [];
+        await strategy.start(['bob'], {
+            /**
+             * @param {{ title?: string }[]} streams
+             */
+            onStreamStarted(streams) {
+                events.push(`started:${streams[0].title}`);
+            },
+            /**
+             * @param {{ title?: string }[]} streams
+             */
+            onStreamUpdated(streams) {
+                events.push(`updated:${streams[0].title}`);
+            },
+            onStreamEnded() {
+            }
+        });
+        now = 9 * minute;
+        await clock.tick();
+        now = 10 * minute;
+        await clock.tick();
+        now = 11 * minute;
+        await clock.tick();
+        now = 20 * minute;
+        await clock.tick();
+        await strategy.stop();
+
+        assert.deepEqual(events, [
+            'started:Hello',
+            'updated:Hello',
+            'updated:Next'
         ]);
     });
 

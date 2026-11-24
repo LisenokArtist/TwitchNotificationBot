@@ -7,5 +7,6 @@
   "messagesStartAnnouncement": ["Стрим начался!"],
   "messagesEndAnnouncement": ["Стрим закончился."],
   "twitchObservation": "poll",
-  "twitchPollIntervalMinutes": 1
+  "twitchPollIntervalMinutes": 10,
+  "twitchPreviewRefreshMinutes": 10
 }

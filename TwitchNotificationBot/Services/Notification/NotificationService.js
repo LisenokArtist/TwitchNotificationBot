@@ -2,7 +2,22 @@ const { ServiceBase } = require('../ServiceBase');
 const { NotificationConfig } = require('../../config/AppConfig');
 const { Queue } = require('../../domain/Queue');
 const { StreamResponse } = require('../../domain/twitch/TwitchApiModels');
-const { EmbedBuilder, User } = require('discord.js');
+const { AttachmentBuilder, EmbedBuilder, User } = require('discord.js');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+/**
+ * @typedef {object} DiscordMessageHandle
+ * @property {(payload: object) => Promise<DiscordMessageHandle>} edit
+ */
+
+/**
+ * @typedef {object} SentStreamMessage
+ * @property {DiscordMessageHandle | null} discord
+ * @property {number | null} telegramMessageId
+ */
+
 /** @typedef {import('../Twitch/TwitchService').TwitchService} TwitchService */
 /** @typedef {import('../Discord/DiscordService').DiscordService} DiscordService */
 /** @typedef {import('../Telegram/TelegramService').TelegramService} TelegramService */
@@ -53,7 +68,17 @@ class NotificationService extends ServiceBase {
 
         /** @type {NodeJS.Timeout|null}*/
         this.timer = null;
+
+        /** @type {Map<string, SentStreamMessage>} */
+        this.#sent = new Map();
+        /** @type {{ key: string, buffer: Buffer, at: number } | null} */
+        this.#previewCache = null;
     }
+
+    /** @type {Map<string, SentStreamMessage>} */
+    #sent;
+    /** @type {{ key: string, buffer: Buffer, at: number } | null} */
+    #previewCache;
 
     async Start() {
         if (this.isInitializated) {
@@ -86,10 +111,11 @@ class NotificationService extends ServiceBase {
 
     /**
      * Данные стрима обновились.
-     * Уведомление не отправляется: нужно обновлять уже отправленную запись в чате.
+     * Правит уже отправленные сообщения и заменяет прикреплённое превью.
      * @param {StreamResponse[]} streams
      */
     onStreamUpdated(streams) {
+        this.#onStreamStatus(streams, 'was updated', () => this.#streamIsUpdated(streams));
     }
 
     /**
@@ -238,26 +264,46 @@ class NotificationService extends ServiceBase {
                 const channel = await discord.getRespondChannel(this.discordGuildId, this.discordChannelId);
                 
                 switch (arg.type) {
-                    case NotificationTypeProvider.Started: {
-                        await channel.send({
-                            content: arg.type,
-                            embeds: [this.#buildEmbedMessage(
-                                arg.stream,
-                                discord.client.user)]
-                        });
-                        break;
-                    }
+                    case NotificationTypeProvider.Started:
                     case NotificationTypeProvider.Updated: {
-                        //Требуется придумать как обновлять сообщение, которое было ранее отправлено
+                        const preview = await this.#loadPreview(arg.stream);
+                        const file = new AttachmentBuilder(preview, { name: 'preview.jpg' });
+                        const embed = this.#buildEmbedMessage(
+                            arg.stream,
+                            arg.type === NotificationTypeProvider.Started ? discord.client?.user || undefined : undefined,
+                            undefined,
+                            undefined,
+                            'attachment://preview.jpg'
+                        );
+                        if (arg.type === NotificationTypeProvider.Started) {
+                            const message = await channel.send({
+                                content: arg.type,
+                                embeds: [embed],
+                                files: [file]
+                            });
+                            this.#remember(arg.stream, { discord: message });
+                            break;
+                        }
+
+                        const sent = this.#sent.get(streamKey(arg.stream));
+                        if (!sent?.discord) {
+                            return false;
+                        }
+
+                        const edited = await sent.discord.edit({
+                            embeds: [embed],
+                            files: [file],
+                            attachments: []
+                        });
+                        sent.discord = edited;
                         break;
                     }
                     case NotificationTypeProvider.Ended: {
                         await channel.send({
                             content: arg.type,
-                            embeds: [this.#buildEmbedMessage(
-                                arg.stream
-                            )]
-                        })
+                            embeds: [this.#buildEmbedMessage(arg.stream)]
+                        });
+                        this.#sent.delete(streamKey(arg.stream));
                         break;
                     }
                 }
@@ -286,14 +332,14 @@ class NotificationService extends ServiceBase {
      * @param {User|undefined} discordUser Если указано, добавляет ссылку на пользователя Discord
      * @param {any|undefined} twitchGame Если указано, добавляет название и обложку игры
      * @param {EmbedField[]|undefined} embedFields Если указано, добавляет строки на каждое поле
+     * @param {string|undefined} imageUrl Адрес картинки внутри сообщения. Внешнюю ссылку Twitch не используем: она пропадает.
      */
-    #buildEmbedMessage(stream, discordUser, twitchGame, embedFields) {
+    #buildEmbedMessage(stream, discordUser = undefined, twitchGame = undefined, embedFields = undefined, imageUrl = undefined) {
         return new EmbedBuilder({
             title: stream.title,
             url: `https://www.twitch.tv/${stream.user_login}`,
-            image: {
-                url: stream.thumbnail_url.replace('{width}', 400).replace('{height}', 220)
-            },
+            ...stream.game_name && { description: stream.game_name },
+            ...imageUrl && { image: { url: imageUrl } },
 
             ...discordUser && {
                 author: {
@@ -322,18 +368,40 @@ class NotificationService extends ServiceBase {
             try {
                 const text = this.#pickAnnouncementText(arg.type) ?? "";
                 switch (arg.type) {
-                    case NotificationTypeProvider.Started: {
-                        await telegram.client.sendPhoto(
-                            this.telegramChannelId,
-                            arg.stream.thumbnail_url.replace('{width}', 1024).replace('{height}', 800),
-                            this.#buildTelegramOptions(arg.type, arg.stream, text)
-                        )
+                    case NotificationTypeProvider.Started:
+                    case NotificationTypeProvider.Updated: {
+                        const preview = await this.#loadPreview(arg.stream);
+                        const caption = this.#streamCaption(arg.type, arg.stream);
+                        const options = this.#buildTelegramOptions(arg.type, arg.stream, caption);
+                        if (arg.type === NotificationTypeProvider.Started) {
+                            const message = await telegram.client.sendPhoto(
+                                this.telegramChannelId,
+                                preview,
+                                options,
+                                { filename: 'preview.jpg', contentType: 'image/jpeg' }
+                            );
+                            const messageId = readMessageId(message);
+                            if (messageId === null) {
+                                return false;
+                            }
+
+                            this.#remember(arg.stream, { telegramMessageId: messageId });
+                            break;
+                        }
+
+                        const sent = this.#sent.get(streamKey(arg.stream));
+                        if (sent?.telegramMessageId == null) {
+                            return false;
+                        }
+
+                        await this.#editTelegramPhoto(sent.telegramMessageId, preview, caption, options.reply_markup);
                         break;
                     }
                     case NotificationTypeProvider.Ended: {
                         await telegram.client.sendMessage(
                             this.telegramChannelId,
-                            text)
+                            text);
+                        this.#sent.delete(streamKey(arg.stream));
                         break;
                     }
                 }
@@ -370,7 +438,7 @@ class NotificationService extends ServiceBase {
             parse_mode: 'HTML',
             ...this.telegramRespondThreadId && { message_thread_id: this.telegramRespondThreadId },
             ...descriction?.length > 0 && { caption: descriction },
-            ...status === NotificationTypeProvider.Started && {
+            ...(status === NotificationTypeProvider.Started || status === NotificationTypeProvider.Updated) && {
                 reply_markup: {
                     inline_keyboard: [[{
                         text: 'Посетить стрим',
@@ -398,6 +466,129 @@ class NotificationService extends ServiceBase {
     pickAnnouncementTextTest(status) {
         return this.#pickAnnouncementText(status);
     }
+
+    /**
+     * @param {StreamResponse} stream
+     * @param {Partial<SentStreamMessage>} patch
+     */
+    #remember(stream, patch) {
+        const key = streamKey(stream);
+        const current = this.#sent.get(key) ?? { discord: null, telegramMessageId: null };
+        this.#sent.set(key, { ...current, ...patch });
+    }
+
+    /**
+     * Скачивает превью один раз для пары Discord и Telegram.
+     * @param {StreamResponse} stream
+     * @returns {Promise<Buffer>}
+     */
+    async #loadPreview(stream) {
+        const key = `${stream.user_login}|${stream.title}|${stream.game_name}`;
+        const cached = this.#previewCache;
+        if (cached && cached.key === key && Date.now() - cached.at < 15000) {
+            return cached.buffer;
+        }
+
+        if (typeof stream.thumbnail_url !== 'string' || stream.thumbnail_url.length === 0) {
+            throw new Error('У стрима нет адреса превью');
+        }
+
+        const url = stream.thumbnail_url.replaceAll('{width}', '1280').replaceAll('{height}', '720');
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Превью не скачано: ${response.status}`);
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+        this.#previewCache = { key, buffer, at: Date.now() };
+        return buffer;
+    }
+
+    /**
+     * @param {NotificationTypeProvider} type
+     * @param {StreamResponse} stream
+     * @returns {string}
+     */
+    #streamCaption(type, stream) {
+        const announcement = this.#pickAnnouncementText(type) ?? '';
+        const lines = [];
+        if (announcement.length > 0) {
+            lines.push(escapeHtml(announcement));
+        }
+        if (stream.title) {
+            lines.push(escapeHtml(stream.title));
+        }
+        if (stream.game_name) {
+            lines.push(escapeHtml(stream.game_name));
+        }
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Заменяет фото у уже отправленного сообщения. Ссылка на CDN Twitch не сохраняется.
+     * @param {number} messageId
+     * @param {Buffer} preview
+     * @param {string} caption
+     * @param {object|undefined} replyMarkup
+     * @returns {Promise<void>}
+     */
+    async #editTelegramPhoto(messageId, preview, caption, replyMarkup) {
+        const client = this.telegram.client;
+        if (!client) {
+            throw new Error('Telegram client is not started');
+        }
+
+        const file = path.join(os.tmpdir(), `twitch-preview-${messageId}-${Date.now()}.jpg`);
+        await fs.promises.writeFile(file, preview);
+        try {
+            await client.editMessageMedia({
+                type: 'photo',
+                media: `attach://${file}`,
+                caption,
+                parse_mode: 'HTML',
+                fileOptions: { filename: 'preview.jpg', contentType: 'image/jpeg' }
+            }, {
+                chat_id: this.telegramChannelId,
+                message_id: messageId,
+                ...replyMarkup && { reply_markup: replyMarkup }
+            });
+        } finally {
+            await fs.promises.rm(file, { force: true });
+        }
+    }
+}
+
+/**
+ * @param {StreamResponse} stream
+ * @returns {string}
+ */
+function streamKey(stream) {
+    return stream.user_login.toLowerCase();
+}
+
+/**
+ * @param {unknown} message
+ * @returns {number | null}
+ */
+function readMessageId(message) {
+    if (!message || typeof message !== 'object' || !('message_id' in message)) {
+        return null;
+    }
+
+    const id = /** @type {{ message_id?: unknown }} */ (message).message_id;
+    return typeof id === 'number' ? id : null;
+}
+
+/**
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeHtml(text) {
+    return text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
 }
 
 /**

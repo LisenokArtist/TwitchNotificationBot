@@ -1,5 +1,6 @@
 const { ObservationStrategy } = require('./ObservationStrategy');
 const { TwitchError } = require('./TwitchError');
+const { assertPreviewRefresh } = require('./observationSettings');
 /** @typedef {import('../domain/twitch/TwitchApiModels').StreamResponse} StreamResponse */
 /** @typedef {import('../ports/StreamObserver').StreamObserver} StreamObserver */
 /** @typedef {import('./TwitchClient').TwitchClient} TwitchClient */
@@ -8,6 +9,7 @@ const { TwitchError } = require('./TwitchError');
 const DEFAULT_URL = 'wss://eventsub.wss.twitch.tv/ws';
 const WELCOME_TIMEOUT_MS = 10 * 1000;
 const MAX_RECONNECTS = 5;
+const MINUTE_MS = 60 * 1000;
 
 /**
  * Минимальный сокет: слушаем сообщения и закрываем соединение.
@@ -25,12 +27,15 @@ const MAX_RECONNECTS = 5;
  * @typedef {object} WebSocketStrategyOptions
  * @property {SocketConstructor} [WebSocket]
  * @property {string} [url]
+ * @property {number} [previewRefreshMinutes]
+ * @property {() => number} [now]
  */
 
 /**
  * EventSub через исходящий WebSocket.
  * Подписка с ключом приложения создаётся на conduit, а сокет становится его shard.
  * Прямой транспорт websocket Twitch открывает только пользовательским токеном, его здесь нет.
+ * Смена названия или игры и долгая пауза без изменений дают одно и то же обновление.
  */
 class WebSocketStrategy extends ObservationStrategy {
     /**
@@ -39,12 +44,17 @@ class WebSocketStrategy extends ObservationStrategy {
      */
     constructor(client, options) {
         super();
+        const previewRefreshMinutes = assertPreviewRefresh(options?.previewRefreshMinutes ?? 10);
         /** @type {TwitchClient} */
         this.#client = client;
         /** @type {SocketConstructor | null} */
         this.#Socket = options?.WebSocket ?? null;
         /** @type {string} */
         this.#url = options?.url ?? DEFAULT_URL;
+        /** @type {number} */
+        this.#previewRefreshMs = previewRefreshMinutes * MINUTE_MS;
+        /** @type {() => number} */
+        this.#now = options?.now ?? Date.now;
     }
 
     /** @type {TwitchClient} */
@@ -53,6 +63,14 @@ class WebSocketStrategy extends ObservationStrategy {
     #Socket;
     /** @type {string} */
     #url;
+    /** @type {number} */
+    #previewRefreshMs;
+    /** @type {() => number} */
+    #now;
+    /** @type {ReturnType<typeof setInterval> | null} */
+    #previewTimer = null;
+    /** @type {Map<string, number>} */
+    #shownAt = new Map();
     /** @type {boolean} */
     #running = false;
     /** @type {boolean} */
@@ -100,6 +118,7 @@ class WebSocketStrategy extends ObservationStrategy {
         this.#running = true;
         try {
             await this.#open(this.#url, true);
+            this.#startPreviewTimer();
         } catch (error) {
             await this.stop();
             throw error;
@@ -113,6 +132,7 @@ class WebSocketStrategy extends ObservationStrategy {
     async stop() {
         this.#running = false;
         this.#clearKeepalive();
+        this.#clearPreviewTimer();
         const socket = this.#socket;
         this.#socket = null;
         if (socket) {
@@ -335,6 +355,7 @@ class WebSocketStrategy extends ObservationStrategy {
 
         const ready = stream ?? blankStream(event);
         this.#live.set(login.toLowerCase(), ready);
+        this.#shownAt.set(login.toLowerCase(), this.#now());
         this.#emitStarted([ready]);
     }
 
@@ -350,6 +371,7 @@ class WebSocketStrategy extends ObservationStrategy {
         const key = login.toLowerCase();
         const stream = this.#live.get(key) ?? blankStream(event);
         this.#live.delete(key);
+        this.#shownAt.delete(key);
         this.#emitEnded([stream]);
     }
 
@@ -375,7 +397,48 @@ class WebSocketStrategy extends ObservationStrategy {
         }
 
         this.#live.set(login.toLowerCase(), next);
+        this.#shownAt.set(login.toLowerCase(), this.#now());
         this.#emitUpdated([next]);
+    }
+
+    #startPreviewTimer() {
+        this.#clearPreviewTimer();
+        this.#previewTimer = setInterval(() => {
+            this.#emitDuePreviews();
+        }, this.#previewRefreshMs);
+    }
+
+    #clearPreviewTimer() {
+        if (this.#previewTimer === null) {
+            return;
+        }
+
+        clearInterval(this.#previewTimer);
+        this.#previewTimer = null;
+    }
+
+    /**
+     * Заменяет превью у стримов, которые давно не меняли название и игру.
+     */
+    #emitDuePreviews() {
+        if (!this.#running) {
+            return;
+        }
+
+        /** @type {StreamResponse[]} */
+        const due = [];
+        const now = this.#now();
+        for (const [key, stream] of this.#live) {
+            const shownAt = this.#shownAt.get(key);
+            if (shownAt !== undefined && now - shownAt < this.#previewRefreshMs) {
+                continue;
+            }
+
+            this.#shownAt.set(key, now);
+            due.push(stream);
+        }
+
+        this.#emitUpdated(due);
     }
 
     /**

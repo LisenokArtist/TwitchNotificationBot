@@ -16,7 +16,12 @@ declare class TelegramBot {
     ): Promise<unknown>;
     sendPhoto(
         chatId: number | string,
-        photo: string,
+        photo: string | Buffer,
+        extra?: Record<string, unknown>,
+        fileOptions?: { filename?: string; contentType?: string }
+    ): Promise<unknown>;
+    editMessageMedia(
+        media: Record<string, unknown>,
         extra?: Record<string, unknown>
     ): Promise<unknown>;
     isPolling(): boolean;

@@ -37,7 +37,8 @@ class AppConfig {
             messagesStartAnnouncement: this.notificationConfig.messagesStartAnnouncement,
             messagesEndAnnouncement: this.notificationConfig.messagesEndAnnouncement,
             twitchObservation: this.twitchConfig.observation,
-            twitchPollIntervalMinutes: this.twitchConfig.pollIntervalMinutes
+            twitchPollIntervalMinutes: this.twitchConfig.pollIntervalMinutes,
+            twitchPreviewRefreshMinutes: this.twitchConfig.previewRefreshMinutes
         };
 
         try {
@@ -80,7 +81,8 @@ class AppConfig {
                 env.TWITCH_CLIENT_ID ?? '',
                 env.TWITCH_CLIENT_SECRET ?? '',
                 observation.strategy,
-                observation.pollIntervalMinutes
+                observation.pollIntervalMinutes,
+                observation.previewRefreshMinutes
             ),
             new TelegramConfig(env.TELEGRAM_BOT_TOKEN ?? ''),
             new NotificationConfig(
@@ -121,8 +123,9 @@ class TwitchConfig {
      * @param {string} [secretId]
      * @param {'poll'|'websocket'} [observation]
      * @param {number} [pollIntervalMinutes]
+     * @param {number} [previewRefreshMinutes]
      */
-    constructor(clientId = '', secretId = '', observation = 'poll', pollIntervalMinutes = 1) {
+    constructor(clientId = '', secretId = '', observation = 'poll', pollIntervalMinutes = 10, previewRefreshMinutes = 10) {
         /** @type {string} */
         this.clientId = clientId;
         /** @type {string} */
@@ -131,6 +134,8 @@ class TwitchConfig {
         this.observation = observation;
         /** @type {number} */
         this.pollIntervalMinutes = pollIntervalMinutes;
+        /** @type {number} */
+        this.previewRefreshMinutes = previewRefreshMinutes;
     }
 }
 
