@@ -1,6 +1,4 @@
-﻿const { GiveRoleOnReactionSettings } = require('../services/Discord/CommandSettings/GiveRoleOnReaction/GiveRoleOnReactionSettings');
-
-//const { TwitchService } = require('../services/Twitch/TwitchService');
+﻿//const { TwitchService } = require('../services/Twitch/TwitchService');
 //const { StreamMonitorEventProvider } = require('../services/Twitch/StreamMonitorManager');
 //const { DiscordService } = require('../services/Discord/DiscordService');
 /*const { NotificationService } = require('../services/Notification/NotificationService');*/
@@ -28,21 +26,6 @@ describe('AppConfig', function () {
         return result;
     });
 })
-
-describe('GiveRoleOnReactionSettings', function () {
-    it('Remove by guildId, messageId and return items as result', function () {
-        const settings = new GiveRoleOnReactionSettings();
-        settings.loadSettings();
-        const items = settings.removeMessage('1203097199945195590','1347764616159170570');
-        console.log(items.length);
-    });
-    it('Remove by guildId, messageId, reaction and return items as result', function () {
-        const settings = new GiveRoleOnReactionSettings();
-        settings.loadSettings();
-        const items = settings.removeMessage('1203097199945195590', '1347764616159170570', '❤️');
-        console.log(items.length);
-    });
-});
 
 describe('Services', () => {
     describe('Telegram', () => {

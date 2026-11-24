@@ -6,19 +6,9 @@ const root = path.join(__dirname, '..');
 const envFile = path.join(root, 'config', '.env');
 const settingsFile = path.join(root, 'config', 'settings.json');
 const twitchAuthTokenFile = path.join(root, 'data', 'twitch-auth-token.json');
-const giveRoleSettingsFile = path.join(root, 'data', 'give-role-on-reaction.json');
 
 const legacyAppConfigFile = path.join(root, 'Core', 'AppConfig.json');
 const legacyAuthTokenFile = path.join(root, 'services', 'Twitch', 'AuthToken.json');
-const legacyGiveRoleBesideClass = path.join(
-    root,
-    'services',
-    'Discord',
-    'CommandSettings',
-    'GiveRoleOnReaction',
-    'GiveRoleOnReactionSettings.json'
-);
-const legacyGiveRoleAtRoot = path.join(root, 'GiveRoleOnReactionSettings.json');
 
 /**
  * Копирует файл, если новое место ещё пустое.
@@ -39,11 +29,6 @@ function copyIfMissing(from, to) {
  */
 function migrateLegacyFiles() {
     copyIfMissing(legacyAuthTokenFile, twitchAuthTokenFile);
-
-    if (!fs.existsSync(giveRoleSettingsFile)) {
-        copyIfMissing(legacyGiveRoleBesideClass, giveRoleSettingsFile);
-        copyIfMissing(legacyGiveRoleAtRoot, giveRoleSettingsFile);
-    }
 
     if (fs.existsSync(envFile) || fs.existsSync(settingsFile) || !fs.existsSync(legacyAppConfigFile)) {
         return;
@@ -96,6 +81,5 @@ module.exports = {
     envFile,
     settingsFile,
     twitchAuthTokenFile,
-    giveRoleSettingsFile,
     migrateLegacyFiles
 };

@@ -163,7 +163,7 @@ class DiscordService extends ServiceBase {
         bits.add(32767);
         this.client = new Client({
             intents: bits,
-            partials: [Partials.Message, Partials.Channel, Partials.Reaction],
+            partials: [Partials.Message, Partials.Channel],
         });
 
         this.commands = this.#loadCommandCollection();
