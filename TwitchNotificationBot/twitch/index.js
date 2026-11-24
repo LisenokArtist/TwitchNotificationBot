@@ -10,20 +10,26 @@ const { parseTwitchObservation, assertPollInterval, assertPreviewRefresh } = req
  * их отклоняет parseTwitchObservation.
  * @param {{ observation: 'poll'|'websocket', pollIntervalMinutes: number, previewRefreshMinutes: number }} config
  * @param {TwitchClient} client
+ * @param {{ observation: () => import('./liveState').LiveRecord[] } | null} [cache]
  * @returns {ObservationStrategy}
  */
-function createObservationStrategy(config, client) {
+function createObservationStrategy(config, client, cache = null) {
     const parsed = parseTwitchObservation({
         twitchObservation: config.observation,
         twitchPollIntervalMinutes: config.pollIntervalMinutes,
         twitchPreviewRefreshMinutes: config.previewRefreshMinutes
     });
+    const restored = cache ? () => cache.observation() : undefined;
     if (parsed.strategy === 'websocket') {
-        return new WebSocketStrategy(client, { previewRefreshMinutes: parsed.previewRefreshMinutes });
+        return new WebSocketStrategy(client, {
+            previewRefreshMinutes: parsed.previewRefreshMinutes,
+            restored
+        });
     }
 
     return new PollStrategy(client, parsed.pollIntervalMinutes, {
-        previewRefreshMinutes: parsed.previewRefreshMinutes
+        previewRefreshMinutes: parsed.previewRefreshMinutes,
+        restored
     });
 }
 

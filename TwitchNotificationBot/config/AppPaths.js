@@ -6,6 +6,7 @@ const root = path.join(__dirname, '..');
 const envFile = path.join(root, 'config', '.env');
 const settingsFile = path.join(root, 'config', 'settings.json');
 const twitchAuthTokenFile = path.join(root, 'data', 'twitch-auth-token.json');
+const streamNotificationsFile = path.join(root, 'data', 'stream-notifications.json');
 
 const legacyAppConfigFile = path.join(root, 'Core', 'AppConfig.json');
 const legacyAuthTokenFile = path.join(root, 'services', 'Twitch', 'AuthToken.json');
@@ -81,5 +82,6 @@ module.exports = {
     envFile,
     settingsFile,
     twitchAuthTokenFile,
+    streamNotificationsFile,
     migrateLegacyFiles
 };

@@ -1,9 +1,11 @@
 const { AppConfig } = require('./config/AppConfig');
+const { streamNotificationsFile } = require('./config/AppPaths');
 const { ServiceBase } = require('./services/ServiceBase');
 const { TwitchService } = require('./services/Twitch/TwitchService');
 const { DiscordService } = require('./services/Discord/DiscordService');
 const { TelegramService } = require('./services/Telegram/TelegramService');
 const { NotificationService } = require('./services/Notification/NotificationService');
+const { StreamNotificationCache } = require('./services/Notification/StreamNotificationCache');
 
 class TwitchNotificationBot {
     /**
@@ -11,7 +13,8 @@ class TwitchNotificationBot {
      */
     constructor(config) {
         // Composition root: явные зависимости между сервисами.
-        this.twitchService = new TwitchService(config.twitchConfig);
+        const streamNotifications = new StreamNotificationCache(streamNotificationsFile);
+        this.twitchService = new TwitchService(config.twitchConfig, streamNotifications);
         this.discordService = new DiscordService(config.discordConfig);
         this.telegramService = new TelegramService(config.telegramConfig);
 
@@ -19,7 +22,8 @@ class TwitchNotificationBot {
             config.notificationConfig,
             this.twitchService,
             this.discordService,
-            this.telegramService
+            this.telegramService,
+            streamNotifications
         );
 
         // До Start, чтобы первый тик таймера не потерял событие.

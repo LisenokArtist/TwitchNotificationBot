@@ -4,6 +4,7 @@ const { TwitchClient, createObservationStrategy } = require('../../twitch');
 /** @typedef {import('../../ports/StreamObserver').StreamObserver} StreamObserver */
 /** @typedef {import('../../domain/twitch/TwitchApiModels').StreamResponse} StreamResponse */
 /** @typedef {import('../../twitch').ObservationStrategy} ObservationStrategy */
+/** @typedef {import('../Notification/StreamNotificationCache').StreamNotificationCache} StreamNotificationCache */
 
 /**
  * Сервис Twitch. Сеть и наблюдение живут в библиотеке twitch.
@@ -13,8 +14,9 @@ const { TwitchClient, createObservationStrategy } = require('../../twitch');
 class TwitchService extends ServiceBase {
     /**
      * @param {TwitchConfig} config
+     * @param {StreamNotificationCache | null} [notifications]
      */
-    constructor(config) {
+    constructor(config, notifications = null) {
         super();
 
         /** @type {TwitchClient} */
@@ -23,7 +25,7 @@ class TwitchService extends ServiceBase {
             clientSecret: config.secretId
         });
         /** @type {ObservationStrategy} */
-        this.strategy = createObservationStrategy(config, this.client);
+        this.strategy = createObservationStrategy(config, this.client, notifications);
 
         /** @type {string[]} */
         this.#logins = [];

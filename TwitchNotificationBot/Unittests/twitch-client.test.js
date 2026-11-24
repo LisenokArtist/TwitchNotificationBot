@@ -451,6 +451,68 @@ describe('Twitch observation', function () {
         ]);
     });
 
+    it('does not announce a restored live stream until it changes or ends', async function () {
+        const tokenFile = tempTokenFile();
+        files.push(tokenFile);
+        /** @type {Record<string, unknown>[]} */
+        const pages = [
+            { data: [helixStream('Hello')] },
+            { data: [helixStream('Next', 'Just Chatting')] },
+            { data: [] }
+        ];
+        const { client } = clientWith(tokenFile, (url) => {
+            if (url.includes('/oauth2/token')) {
+                return tokenResponse('token-a');
+            }
+
+            return jsonResponse(200, pages.shift() ?? { data: [] });
+        });
+        const clock = manualClock();
+        const strategy = new PollStrategy(client, 10, {
+            clock: clock.clock,
+            previewRefreshMinutes: 30,
+            now: () => 0,
+            restored: () => [{
+                login: 'bob',
+                shownAt: 0,
+                stream: /** @type {import('../domain/twitch/TwitchApiModels').StreamResponse} */ ({
+                    user_login: 'bob',
+                    user_name: 'Bob',
+                    title: 'Hello',
+                    game_name: 'Chess',
+                    thumbnail_url: 'https://img/{width}x{height}.jpg'
+                })
+            }]
+        });
+        /** @type {string[]} */
+        const events = [];
+        await strategy.start(['bob'], {
+            onStreamStarted() {
+                events.push('started');
+            },
+            /**
+             * @param {{ title?: string }[]} streams
+             */
+            onStreamUpdated(streams) {
+                events.push(`updated:${streams[0].title}`);
+            },
+            /**
+             * @param {{ title?: string }[]} streams
+             */
+            onStreamEnded(streams) {
+                events.push(`ended:${streams[0].title}`);
+            }
+        });
+        await clock.tick();
+        await clock.tick();
+        await strategy.stop();
+
+        assert.deepEqual(events, [
+            'updated:Next',
+            'ended:Next'
+        ]);
+    });
+
     it('receives stream events through a conduit websocket', async function () {
         const tokenFile = tempTokenFile();
         files.push(tokenFile);

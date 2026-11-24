@@ -1,5 +1,6 @@
 const { ObservationStrategy } = require('./ObservationStrategy');
 const { assertPollInterval, assertPreviewRefresh } = require('./observationSettings');
+const { restoreLiveSet } = require('./liveState');
 /** @typedef {import('../domain/twitch/TwitchApiModels').StreamResponse} StreamResponse */
 /** @typedef {import('../ports/StreamObserver').StreamObserver} StreamObserver */
 /** @typedef {import('./TwitchClient').TwitchClient} TwitchClient */
@@ -16,6 +17,7 @@ const { assertPollInterval, assertPreviewRefresh } = require('./observationSetti
  * @property {IntervalClock} [clock]
  * @property {number} [previewRefreshMinutes]
  * @property {() => number} [now]
+ * @property {() => import('./liveState').LiveRecord[]} [restored]
  */
 
 const MINUTE_MS = 60 * 1000;
@@ -26,6 +28,7 @@ const MINUTE_MS = 60 * 1000;
  * Если они не менялись дольше заданного промежутка, обновление всё равно уходит,
  * чтобы получатель мог заменить прикреплённое превью.
  * Ошибочный ответ не считается концом стрима и не останавливает следующий опрос.
+ * Уже известные эфиры читаются до первого запроса, чтобы перезапуск не слал повторный старт.
  */
 class PollStrategy extends ObservationStrategy {
     /**
@@ -47,6 +50,8 @@ class PollStrategy extends ObservationStrategy {
         this.#clock = options?.clock ?? new DefaultClock();
         /** @type {() => number} */
         this.#now = options?.now ?? Date.now;
+        /** @type {(() => import('./liveState').LiveRecord[]) | undefined} */
+        this.#restored = options?.restored;
     }
 
     /** @type {TwitchClient} */
@@ -59,6 +64,8 @@ class PollStrategy extends ObservationStrategy {
     #previewRefreshMs;
     /** @type {() => number} */
     #now;
+    /** @type {(() => import('./liveState').LiveRecord[]) | undefined} */
+    #restored;
     /** @type {Map<string, number>} */
     #shownAt = new Map();
     /** @type {string[]} */
@@ -85,6 +92,7 @@ class PollStrategy extends ObservationStrategy {
             return;
         }
 
+        restoreLiveSet(this.#logins, this.#restored, this.#live, this.#shownAt);
         this.#running = true;
         await this.#tick();
         if (!this.#running) {

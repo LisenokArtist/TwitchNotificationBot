@@ -1,6 +1,7 @@
 const { ObservationStrategy } = require('./ObservationStrategy');
 const { TwitchError } = require('./TwitchError');
 const { assertPreviewRefresh } = require('./observationSettings');
+const { restoreLiveSet } = require('./liveState');
 /** @typedef {import('../domain/twitch/TwitchApiModels').StreamResponse} StreamResponse */
 /** @typedef {import('../ports/StreamObserver').StreamObserver} StreamObserver */
 /** @typedef {import('./TwitchClient').TwitchClient} TwitchClient */
@@ -29,6 +30,7 @@ const MINUTE_MS = 60 * 1000;
  * @property {string} [url]
  * @property {number} [previewRefreshMinutes]
  * @property {() => number} [now]
+ * @property {() => import('./liveState').LiveRecord[]} [restored]
  */
 
 /**
@@ -55,6 +57,8 @@ class WebSocketStrategy extends ObservationStrategy {
         this.#previewRefreshMs = previewRefreshMinutes * MINUTE_MS;
         /** @type {() => number} */
         this.#now = options?.now ?? Date.now;
+        /** @type {(() => import('./liveState').LiveRecord[]) | undefined} */
+        this.#restored = options?.restored;
     }
 
     /** @type {TwitchClient} */
@@ -67,6 +71,8 @@ class WebSocketStrategy extends ObservationStrategy {
     #previewRefreshMs;
     /** @type {() => number} */
     #now;
+    /** @type {(() => import('./liveState').LiveRecord[]) | undefined} */
+    #restored;
     /** @type {ReturnType<typeof setInterval> | null} */
     #previewTimer = null;
     /** @type {Map<string, number>} */
@@ -115,6 +121,7 @@ class WebSocketStrategy extends ObservationStrategy {
         }
 
         this.#conduitId = await this.#client.ensureConduit();
+        restoreLiveSet(logins, this.#restored, this.#live, this.#shownAt);
         this.#running = true;
         try {
             await this.#open(this.#url, true);
@@ -354,8 +361,18 @@ class WebSocketStrategy extends ObservationStrategy {
         }
 
         const ready = stream ?? blankStream(event);
-        this.#live.set(login.toLowerCase(), ready);
-        this.#shownAt.set(login.toLowerCase(), this.#now());
+        const key = login.toLowerCase();
+        const previous = this.#live.get(key);
+        this.#live.set(key, ready);
+        this.#shownAt.set(key, this.#now());
+        // Повторный online для уже известного эфира не создаёт второе сообщение.
+        if (previous) {
+            if (!sameStream(previous, ready)) {
+                this.#emitUpdated([ready]);
+            }
+            return;
+        }
+
         this.#emitStarted([ready]);
     }
 

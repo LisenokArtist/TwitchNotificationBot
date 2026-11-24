@@ -9,14 +9,20 @@ const path = require('node:path');
 
 /**
  * @typedef {object} DiscordMessageHandle
+ * @property {string} [id]
  * @property {(payload: object) => Promise<DiscordMessageHandle>} edit
  */
 
 /**
  * @typedef {object} SentStreamMessage
  * @property {DiscordMessageHandle | null} discord
+ * @property {string | null} discordMessageId
  * @property {number | null} telegramMessageId
+ * @property {boolean} discordClosed
+ * @property {boolean} telegramClosed
  */
+
+/** @typedef {import('./StreamNotificationCache').StreamNotificationCache} StreamNotificationCache */
 
 /** @typedef {import('../Twitch/TwitchService').TwitchService} TwitchService */
 /** @typedef {import('../Discord/DiscordService').DiscordService} DiscordService */
@@ -29,8 +35,9 @@ class NotificationService extends ServiceBase {
      * @param {TwitchService} twitch
      * @param {DiscordService} discord
      * @param {TelegramService} telegram
+     * @param {StreamNotificationCache | null} [notifications]
      */
-    constructor(config, twitch, discord, telegram) {
+    constructor(config, twitch, discord, telegram, notifications = null) {
         super();
 
         /** @type {TwitchService} */
@@ -73,12 +80,16 @@ class NotificationService extends ServiceBase {
         this.#sent = new Map();
         /** @type {{ key: string, buffer: Buffer, at: number } | null} */
         this.#previewCache = null;
+        /** @type {StreamNotificationCache | null} */
+        this.#notifications = notifications;
     }
 
     /** @type {Map<string, SentStreamMessage>} */
     #sent;
     /** @type {{ key: string, buffer: Buffer, at: number } | null} */
     #previewCache;
+    /** @type {StreamNotificationCache | null} */
+    #notifications;
 
     async Start() {
         if (this.isInitializated) {
@@ -87,6 +98,9 @@ class NotificationService extends ServiceBase {
 
         // Пропускаем инициализацию
         this.isInitializated = true;
+        // Номера сообщений нужны до первого опроса, иначе живой эфир уйдёт как новый старт.
+        this.#notifications?.load();
+        this.#loadSent();
         this.#registerSettings();
     }
 
@@ -275,7 +289,11 @@ class NotificationService extends ServiceBase {
                             undefined,
                             'attachment://preview.jpg'
                         );
-                        if (arg.type === NotificationTypeProvider.Started) {
+                        const sent = this.#sent.get(streamKey(arg.stream)) ?? null;
+                        const existing = sent && !sent.discordClosed
+                            ? await this.#openDiscordMessage(channel, sent)
+                            : null;
+                        if (arg.type === NotificationTypeProvider.Started && !existing) {
                             const message = await channel.send({
                                 content: arg.type,
                                 embeds: [embed],
@@ -285,25 +303,29 @@ class NotificationService extends ServiceBase {
                             break;
                         }
 
-                        const sent = this.#sent.get(streamKey(arg.stream));
-                        if (!sent?.discord) {
+                        if (!existing) {
                             return false;
                         }
 
-                        const edited = await sent.discord.edit({
+                        const edited = await existing.edit({
                             embeds: [embed],
                             files: [file],
                             attachments: []
                         });
-                        sent.discord = edited;
+                        this.#remember(arg.stream, { discord: edited });
                         break;
                     }
                     case NotificationTypeProvider.Ended: {
+                        const sent = this.#sent.get(streamKey(arg.stream));
+                        if (sent?.discordClosed) {
+                            break;
+                        }
+
                         await channel.send({
                             content: arg.type,
                             embeds: [this.#buildEmbedMessage(arg.stream)]
                         });
-                        this.#sent.delete(streamKey(arg.stream));
+                        this.#finish(arg.stream, 'discord');
                         break;
                     }
                 }
@@ -373,35 +395,42 @@ class NotificationService extends ServiceBase {
                         const preview = await this.#loadPreview(arg.stream);
                         const caption = this.#streamCaption(arg.type, arg.stream);
                         const options = this.#buildTelegramOptions(arg.type, arg.stream, caption);
-                        if (arg.type === NotificationTypeProvider.Started) {
+                        const sent = this.#sent.get(streamKey(arg.stream)) ?? null;
+                        const messageId = sent && !sent.telegramClosed ? sent.telegramMessageId : null;
+                        if (arg.type === NotificationTypeProvider.Started && messageId == null) {
                             const message = await telegram.client.sendPhoto(
                                 this.telegramChannelId,
                                 preview,
                                 options,
                                 { filename: 'preview.jpg', contentType: 'image/jpeg' }
                             );
-                            const messageId = readMessageId(message);
-                            if (messageId === null) {
+                            const createdId = readMessageId(message);
+                            if (createdId === null) {
                                 return false;
                             }
 
-                            this.#remember(arg.stream, { telegramMessageId: messageId });
+                            this.#remember(arg.stream, { telegramMessageId: createdId });
                             break;
                         }
 
-                        const sent = this.#sent.get(streamKey(arg.stream));
-                        if (sent?.telegramMessageId == null) {
+                        if (messageId == null) {
                             return false;
                         }
 
-                        await this.#editTelegramPhoto(sent.telegramMessageId, preview, caption, options.reply_markup);
+                        await this.#editTelegramPhoto(messageId, preview, caption, options.reply_markup);
+                        this.#remember(arg.stream, { telegramMessageId: messageId });
                         break;
                     }
                     case NotificationTypeProvider.Ended: {
+                        const sent = this.#sent.get(streamKey(arg.stream));
+                        if (sent?.telegramClosed) {
+                            break;
+                        }
+
                         await telegram.client.sendMessage(
                             this.telegramChannelId,
                             text);
-                        this.#sent.delete(streamKey(arg.stream));
+                        this.#finish(arg.stream, 'telegram');
                         break;
                     }
                 }
@@ -473,8 +502,94 @@ class NotificationService extends ServiceBase {
      */
     #remember(stream, patch) {
         const key = streamKey(stream);
-        const current = this.#sent.get(key) ?? { discord: null, telegramMessageId: null };
-        this.#sent.set(key, { ...current, ...patch });
+        const current = this.#sent.get(key) ?? emptySent();
+        const next = { ...current, ...patch, discordClosed: false, telegramClosed: false };
+        const discordMessageId = readDiscordMessageId(next.discord);
+        if (discordMessageId) {
+            next.discordMessageId = discordMessageId;
+        }
+        this.#sent.set(key, next);
+        this.#notifications?.save(key, {
+            discordMessageId: next.discordMessageId,
+            telegramMessageId: next.telegramMessageId,
+            discordClosed: false,
+            telegramClosed: false,
+            stream,
+            shownAt: Date.now()
+        });
+    }
+
+    /**
+     * Отмечает чат, которому уже отправлен конец стрима.
+     * Запись удаляется, когда закрыты оба чата.
+     * @param {StreamResponse} stream
+     * @param {'discord' | 'telegram'} target
+     */
+    #finish(stream, target) {
+        const key = streamKey(stream);
+        const current = this.#sent.get(key) ?? emptySent();
+        if (target === 'discord') {
+            current.discord = null;
+            current.discordMessageId = null;
+            current.discordClosed = true;
+        } else {
+            current.telegramMessageId = null;
+            current.telegramClosed = true;
+        }
+
+        if (current.discordClosed && current.telegramClosed) {
+            this.#sent.delete(key);
+            this.#notifications?.remove(key);
+            return;
+        }
+
+        this.#sent.set(key, current);
+        this.#notifications?.save(key, {
+            discordMessageId: current.discordMessageId,
+            telegramMessageId: current.telegramMessageId,
+            discordClosed: current.discordClosed,
+            telegramClosed: current.telegramClosed
+        });
+    }
+
+    /**
+     * @param {{ messages?: { fetch?: (id: string) => Promise<DiscordMessageHandle> } }} channel
+     * @param {SentStreamMessage} sent
+     * @returns {Promise<DiscordMessageHandle | null>}
+     */
+    async #openDiscordMessage(channel, sent) {
+        if (sent.discord) {
+            return sent.discord;
+        }
+        if (typeof sent.discordMessageId !== 'string' || sent.discordMessageId.length === 0) {
+            return null;
+        }
+        if (typeof channel.messages?.fetch !== 'function') {
+            return null;
+        }
+
+        const message = await channel.messages.fetch(sent.discordMessageId);
+        sent.discord = message;
+        return message;
+    }
+
+    /**
+     * Поднимает номера сообщений из файла до старта наблюдения.
+     */
+    #loadSent() {
+        if (!this.#notifications) {
+            return;
+        }
+
+        for (const record of this.#notifications.list()) {
+            this.#sent.set(record.login, {
+                discord: null,
+                discordMessageId: record.discordMessageId,
+                telegramMessageId: record.telegramMessageId,
+                discordClosed: record.discordClosed,
+                telegramClosed: record.telegramClosed
+            });
+        }
     }
 
     /**
@@ -565,6 +680,31 @@ class NotificationService extends ServiceBase {
  */
 function streamKey(stream) {
     return stream.user_login.toLowerCase();
+}
+
+/**
+ * @returns {SentStreamMessage}
+ */
+function emptySent() {
+    return {
+        discord: null,
+        discordMessageId: null,
+        telegramMessageId: null,
+        discordClosed: false,
+        telegramClosed: false
+    };
+}
+
+/**
+ * @param {DiscordMessageHandle | null} message
+ * @returns {string | null}
+ */
+function readDiscordMessageId(message) {
+    if (!message || typeof message.id !== 'string' || message.id.length === 0) {
+        return null;
+    }
+
+    return message.id;
 }
 
 /**
