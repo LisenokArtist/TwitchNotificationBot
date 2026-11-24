@@ -25,9 +25,11 @@ class AppConfig {
 
     /**
      * Сохраняет настройки без секретов.
+     * @param {string} [file] Файл для проверки. Боевой запуск его не передаёт.
      * @returns {boolean} true если сохранение было успешно
      */
-    save() {
+    save(file) {
+        const target = file ?? settingsFile;
         const settings = {
             discordGuildId: this.discordConfig.guildId || this.notificationConfig.discordGuildId || '',
             twitchMonitorChannelNames: this.notificationConfig.twitchMonitorChannelNames ?? [],
@@ -42,8 +44,8 @@ class AppConfig {
         };
 
         try {
-            fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
-            fs.writeFileSync(settingsFile, JSON.stringify(settings, null, 2));
+            fs.mkdirSync(path.dirname(target), { recursive: true });
+            fs.writeFileSync(target, JSON.stringify(settings, null, 2));
             return true;
         } catch (e) {
             console.log('Unable to save app config file with error: ' + e);
@@ -53,21 +55,26 @@ class AppConfig {
 
     /**
      * Загружает config/.env и config/settings.json.
+     * @param {{ envFile: string, settingsFile: string }} [files] Пути для проверки. Боевой запуск их не передаёт.
      * @returns {boolean} true если загрузка была успешна
      */
-    load() {
-        migrateLegacyFiles();
+    load(files) {
+        const envPath = files?.envFile ?? envFile;
+        const settingsPath = files?.settingsFile ?? settingsFile;
+        if (!files) {
+            migrateLegacyFiles();
+        }
 
-        const envExists = fs.existsSync(envFile);
-        const settingsExist = fs.existsSync(settingsFile);
+        const envExists = fs.existsSync(envPath);
+        const settingsExist = fs.existsSync(settingsPath);
         if (!envExists && !settingsExist) {
-            console.log(`Config not found. Copy the examples to ${envFile} and ${settingsFile}`);
+            console.log(`Config not found. Copy the examples to ${envPath} and ${settingsPath}`);
             return false;
         }
 
         /** @type {Record<string, string>} */
-        const env = envExists ? readEnv(envFile) : {};
-        const settings = settingsExist ? JSON.parse(fs.readFileSync(settingsFile, 'utf8')) : {};
+        const env = envExists ? readEnv(envPath) : {};
+        const settings = settingsExist ? JSON.parse(fs.readFileSync(settingsPath, 'utf8')) : {};
         const observation = parseTwitchObservation(settings);
         const guildId = optionalId(settings.discordGuildId);
 
