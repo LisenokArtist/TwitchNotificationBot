@@ -1,0 +1,17 @@
+name: Сборка Docker-образа
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Забрать репозиторий
+        uses: actions/checkout@v4
+
+      - name: Собрать образ
+        working-directory: TwitchNotificationBot
+        run: docker build --tag twitch-notification-bot:latest .

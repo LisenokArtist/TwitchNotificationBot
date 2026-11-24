@@ -75,13 +75,25 @@ describe('AppConfig', function () {
         assert.equal(Object.hasOwn(saved, 'clientSecret'), false);
     });
 
-    it('returns false when both config files are missing', function () {
+    it('returns false when a config file is missing', function () {
         const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'app-config-'));
         directories.push(directory);
-        const config = new AppConfig();
-        assert.equal(config.load({
+        const envPath = path.join(directory, '.env');
+        const settingsPath = path.join(directory, 'settings.json');
+        fs.writeFileSync(envPath, 'DISCORD_TOKEN=secret-token\n');
+        fs.writeFileSync(settingsPath, '{}');
+
+        assert.equal(new AppConfig().load({
             envFile: path.join(directory, 'missing.env'),
             settingsFile: path.join(directory, 'missing.json')
+        }), false);
+        assert.equal(new AppConfig().load({
+            envFile: envPath,
+            settingsFile: path.join(directory, 'missing.json')
+        }), false);
+        assert.equal(new AppConfig().load({
+            envFile: path.join(directory, 'missing.env'),
+            settingsFile: settingsPath
         }), false);
     });
 });

@@ -1,0 +1,8 @@
+services:
+  bot:
+    build: .
+    image: twitch-notification-bot
+    volumes:
+      - ./config/.env:/app/config/.env:ro
+      - ./config/settings.json:/app/config/settings.json:ro
+      - ./data:/app/data

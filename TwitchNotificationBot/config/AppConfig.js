@@ -67,8 +67,15 @@ class AppConfig {
 
         const envExists = fs.existsSync(envPath);
         const settingsExist = fs.existsSync(settingsPath);
-        if (!envExists && !settingsExist) {
-            console.log(`Config not found. Copy the examples to ${envPath} and ${settingsPath}`);
+        if (!envExists || !settingsExist) {
+            const missing = [];
+            if (!envExists) {
+                missing.push(envPath);
+            }
+            if (!settingsExist) {
+                missing.push(settingsPath);
+            }
+            console.log(`Не хватает файлов конфигурации: ${missing.join(', ')}`);
             return false;
         }
 
