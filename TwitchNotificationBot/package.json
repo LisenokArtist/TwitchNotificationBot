@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "mocha --timeout 10000 unittests/queue.test.js unittests/app-config.test.js unittests/notification-queue.test.js unittests/service-interaction.test.js unittests/twitch-client.test.js unittests/notification-update.test.js unittests/stream-notification-cache.test.js"
+    "test": "mocha --timeout 10000 unittests/queue.test.js unittests/app-config.test.js unittests/notification-queue.test.js unittests/service-interaction.test.js unittests/twitch-client.test.js unittests/notification-update.test.js unittests/stream-notification-cache.test.js unittests/chat-api.test.js"
   },
   "keywords": [],
   "author": "",
