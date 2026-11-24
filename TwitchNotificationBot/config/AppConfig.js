@@ -139,7 +139,7 @@ class TwitchConfig {
      * @param {number} [pollIntervalMinutes]
      * @param {number} [previewRefreshMinutes]
      */
-    constructor(clientId = '', secretId = '', observation = 'poll', pollIntervalMinutes = 10, previewRefreshMinutes = 10) {
+    constructor(clientId = '', secretId = '', observation = 'websocket', pollIntervalMinutes = 2, previewRefreshMinutes = 10) {
         /** @type {string} */
         this.clientId = clientId;
         /** @type {string} */

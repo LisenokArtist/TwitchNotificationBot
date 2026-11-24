@@ -6,7 +6,7 @@
   "telegramRespondThreadId": null,
   "messagesStartAnnouncement": ["Стрим начался!"],
   "messagesEndAnnouncement": ["Стрим закончился."],
-  "twitchObservation": "poll",
-  "twitchPollIntervalMinutes": 10,
+  "twitchObservation": "websocket",
+  "twitchPollIntervalMinutes": 2,
   "twitchPreviewRefreshMinutes": 10
 }

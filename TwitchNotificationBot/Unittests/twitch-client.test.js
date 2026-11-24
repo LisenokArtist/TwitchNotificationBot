@@ -298,19 +298,22 @@ describe('Twitch observation', function () {
     });
 
     it('rejects an interval below one minute and unknown strategies', function () {
-        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 0 }), /не меньше 10/);
-        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 1 }), /не меньше 10/);
-        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 9 }), /не меньше 10/);
-        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: '10' }), /не меньше 10/);
-        assert.throws(() => parseTwitchObservation({ twitchPreviewRefreshMinutes: 5 }), /не меньше 10/);
+        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: 0 }), /Интервал опроса[\s\S]*не меньше 1/);
+        assert.throws(() => parseTwitchObservation({ twitchPollIntervalMinutes: '2' }), /Интервал опроса/);
+        assert.throws(() => parseTwitchObservation({ twitchPreviewRefreshMinutes: 9 }), /не меньше 10/);
         assert.throws(() => parseTwitchObservation({ twitchObservation: 'webhook' }), /poll или websocket/);
         assert.deepEqual(parseTwitchObservation({}), {
-            strategy: 'poll',
-            pollIntervalMinutes: 10,
+            strategy: 'websocket',
+            pollIntervalMinutes: 2,
+            previewRefreshMinutes: 10
+        });
+        assert.deepEqual(parseTwitchObservation({ twitchPollIntervalMinutes: 1 }), {
+            strategy: 'websocket',
+            pollIntervalMinutes: 1,
             previewRefreshMinutes: 10
         });
         assert.deepEqual(parseTwitchObservation({ twitchPollIntervalMinutes: 15 }), {
-            strategy: 'poll',
+            strategy: 'websocket',
             pollIntervalMinutes: 15,
             previewRefreshMinutes: 10
         });
@@ -327,8 +330,8 @@ describe('Twitch observation', function () {
         const tokenFile = tempTokenFile();
         files.push(tokenFile);
         const { client } = clientWith(tokenFile, () => tokenResponse('token-a'));
-        assert.throws(() => new PollStrategy(client, 1), /не меньше 10/);
-        assert.doesNotThrow(() => new PollStrategy(client, 10, { clock: { every() {}, stop() {} } }));
+        assert.throws(() => new PollStrategy(client, 0), /не меньше 1/);
+        assert.doesNotThrow(() => new PollStrategy(client, 2, { clock: { every() {}, stop() {} } }));
     });
 
     it('reports start, update and end, and keeps the previous stream when helix fails', async function () {
