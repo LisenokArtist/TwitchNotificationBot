@@ -178,7 +178,8 @@ class DiscordService extends ServiceBase {
 
         try {
             if (this.client.isReady() === false) {
-                this.client.login(this.config.token);
+                // login завершается, когда шлюз Discord готов. Без ожидания отказ входа теряется.
+                await this.client.login(this.config.token);
                 console.log(`Discord bot logged in`);
             }
             else {
@@ -186,6 +187,22 @@ class DiscordService extends ServiceBase {
             }
         } catch (e) {
             console.log(e);
+        }
+    }
+
+    /**
+     * Закрывает соединение с Discord. Следующий Start входит тем же клиентом заново.
+     * @returns {Promise<void>}
+     */
+    async Stop() {
+        if (!this.client) {
+            return;
+        }
+
+        try {
+            await this.client.destroy();
+        } catch (e) {
+            console.log(`DiscordService stop failed: ${e}`);
         }
     }
 }
