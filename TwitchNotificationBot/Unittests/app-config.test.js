@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { AppConfig } = require('../config/AppConfig');
+const { AppConfig, DiscordConfig, TelegramConfig } = require('../config/AppConfig');
 
 const GUILD_ID = '1203097199945195590';
 const CHANNEL_ID = '1203097199945195591';
@@ -95,5 +95,12 @@ describe('AppConfig', function () {
             envFile: path.join(directory, 'missing.env'),
             settingsFile: settingsPath
         }), false);
+    });
+
+    it('accepts either Discord or Telegram and rejects both empty', function () {
+        assert.equal(new AppConfig().hasChatTarget(), false);
+        assert.equal(new AppConfig(new DiscordConfig('   ')).hasChatTarget(), false);
+        assert.equal(new AppConfig(new DiscordConfig('discord-token')).hasChatTarget(), true);
+        assert.equal(new AppConfig(new DiscordConfig(''), undefined, new TelegramConfig('telegram-token')).hasChatTarget(), true);
     });
 });

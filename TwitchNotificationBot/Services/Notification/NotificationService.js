@@ -191,8 +191,45 @@ class NotificationService extends ServiceBase {
      * @param {StreamResponse[]} streams
      */
     #addToQueie(type, target, streams) {
+        if (!this.#targetEnabled(target)) {
+            return;
+        }
+
         for (const stream of streams) {
             this.queue.enqueue(new NotificationRespond(type, target, stream));
+        }
+    }
+
+    /**
+     * Пустая платформа не попадает в очередь и не блокирует вторую.
+     * @param {NotificationRespondProvider} target
+     * @returns {boolean}
+     */
+    #targetEnabled(target) {
+        const service = target === NotificationRespondProvider.ToDiscord ? this.discord : this.telegram;
+        if (!service) {
+            return false;
+        }
+        if (typeof service.isEnabled === 'function') {
+            return service.isEnabled();
+        }
+
+        return true;
+    }
+
+    /**
+     * Отключённый чат считается уже закрытым, чтобы запись уведомления можно было удалить.
+     * @param {SentStreamMessage} sent
+     */
+    #closeDisabled(sent) {
+        if (!this.#targetEnabled(NotificationRespondProvider.ToDiscord)) {
+            sent.discord = null;
+            sent.discordMessageId = null;
+            sent.discordClosed = true;
+        }
+        if (!this.#targetEnabled(NotificationRespondProvider.ToTelegram)) {
+            sent.telegramMessageId = null;
+            sent.telegramClosed = true;
         }
     }
 
@@ -272,6 +309,9 @@ class NotificationService extends ServiceBase {
     async #respondToDiscord(arg) {
         /** @type {DiscordService}*/
         const discord = this.discord;
+        if (!this.#targetEnabled(NotificationRespondProvider.ToDiscord)) {
+            return true;
+        }
 
         if (discord) {
             try {
@@ -386,6 +426,10 @@ class NotificationService extends ServiceBase {
     async #respondToTelegram(arg) {
         /** @type {TelegramService} */
         const telegram = this.telegram;
+        if (!this.#targetEnabled(NotificationRespondProvider.ToTelegram)) {
+            return true;
+        }
+
         if (telegram && telegram.client) {
             try {
                 const text = this.#pickAnnouncementText(arg.type) ?? "";
@@ -508,12 +552,13 @@ class NotificationService extends ServiceBase {
         if (discordMessageId) {
             next.discordMessageId = discordMessageId;
         }
+        this.#closeDisabled(next);
         this.#sent.set(key, next);
         this.#notifications?.save(key, {
             discordMessageId: next.discordMessageId,
             telegramMessageId: next.telegramMessageId,
-            discordClosed: false,
-            telegramClosed: false,
+            discordClosed: next.discordClosed,
+            telegramClosed: next.telegramClosed,
             stream,
             shownAt: Date.now()
         });
@@ -537,6 +582,7 @@ class NotificationService extends ServiceBase {
             current.telegramClosed = true;
         }
 
+        this.#closeDisabled(current);
         if (current.discordClosed && current.telegramClosed) {
             this.#sent.delete(key);
             this.#notifications?.remove(key);

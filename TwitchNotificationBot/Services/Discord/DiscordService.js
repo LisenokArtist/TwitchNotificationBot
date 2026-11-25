@@ -173,7 +173,21 @@ class DiscordService extends ServiceBase {
         this.isInitializated = true;
     }
 
+    /**
+     * Платформа включена, когда у неё есть токен.
+     * @returns {boolean}
+     */
+    isEnabled() {
+        return this.token.trim().length > 0;
+    }
+
     async Start() {
+        if (!this.isEnabled()) {
+            console.log('DiscordService skipped: token is empty');
+            this.isInitializated = true;
+            return;
+        }
+
         if (!this.isInitializated) await this.Init();
 
         try {

@@ -6,6 +6,10 @@ async function main() {
     if (!appConfig.load()) {
         process.exit(1);
     }
+    if (!appConfig.hasChatTarget()) {
+        console.log('Нужен токен Discord или Telegram. Оба пустые, уведомления отправлять некуда.');
+        process.exit(1);
+    }
 
     const app = new TwitchNotificationBot(appConfig);
     let stopping = false;

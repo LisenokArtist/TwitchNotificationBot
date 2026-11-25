@@ -10,9 +10,17 @@ const TelegramService = class TelegramService extends ServiceBase {
         /** @type {String} */
         this.token = config.token;
 
-        // Клиент создаётся в Start: пустой токен не должен запускать polling.
+        // ?????? ????????? ? Start: ?????? ????? ?? ?????? ????????? polling.
         /** @type {TelegramBot | null} */
         this.client = null;
+    }
+
+    /**
+     * ????????? ????????, ????? ? ??? ???? ?????.
+     * @returns {boolean}
+     */
+    isEnabled() {
+        return this.token.trim().length > 0;
     }
 
     async Start() {
@@ -20,7 +28,7 @@ const TelegramService = class TelegramService extends ServiceBase {
             return;
         }
 
-        if (!this.token) {
+        if (!this.isEnabled()) {
             console.log('TelegramService skipped: token is empty');
             this.isInitializated = true;
             return;

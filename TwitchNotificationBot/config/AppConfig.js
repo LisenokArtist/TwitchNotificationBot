@@ -111,6 +111,15 @@ class AppConfig {
         ));
         return true;
     }
+
+    /**
+     * Есть куда отправлять уведомления: заполнен токен Discord или Telegram.
+     * @returns {boolean}
+     */
+    hasChatTarget() {
+        return this.discordConfig.token.trim().length > 0
+            || this.telegramConfig.token.trim().length > 0;
+    }
 }
 
 class DiscordConfig {

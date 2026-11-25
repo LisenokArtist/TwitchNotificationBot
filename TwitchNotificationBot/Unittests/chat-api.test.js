@@ -53,6 +53,14 @@ describe('Discord and Telegram clients', function () {
         assert.equal(destroyed, true);
     });
 
+    it('does not log in to Discord when the token is empty', async function () {
+        const service = new DiscordService(new DiscordConfig(''));
+        await service.Start();
+        assert.equal(service.isEnabled(), false);
+        assert.equal(service.client, undefined);
+        assert.equal(service.isInitializated, true);
+    });
+
     it('skips Telegram polling without a token and stops polling on Stop', async function () {
         const service = new TelegramService(new TelegramConfig(''));
         await service.Start();

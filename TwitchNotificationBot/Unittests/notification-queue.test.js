@@ -44,6 +44,36 @@ describe('NotificationService queue', function () {
             `${NotificationRespondProvider.ToTelegram}:${NotificationTypeProvider.Ended}`
         ]);
     });
+
+    it('enqueues only the chat that has a token', function () {
+        service = new NotificationService(
+            {
+                twitchMonitorChannelNames: ['bob'],
+                discordGuildId: '1',
+                discordRespondChannelId: '2',
+                telegramRespondChannelId: '3',
+                telegramRespondThreadId: null,
+                messagesStartAnnouncement: ['Стрим начался!'],
+                messagesEndAnnouncement: ['Стрим закончился.']
+            },
+            /** @type {import('../services/Twitch/TwitchService').TwitchService} */ ({}),
+            /** @type {import('../services/Discord/DiscordService').DiscordService} */ ({
+                isEnabled() {
+                    return false;
+                }
+            }),
+            /** @type {import('../services/Telegram/TelegramService').TelegramService} */ ({
+                isEnabled() {
+                    return true;
+                }
+            })
+        );
+        service.retryInSeconds = 60;
+
+        service.onStreamStarted([stream()]);
+        assert.equal(service.queue.length, 1);
+        assert.equal(service.queue.peek()?.respondTo, NotificationRespondProvider.ToTelegram);
+    });
 });
 
 /**

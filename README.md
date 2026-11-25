@@ -25,13 +25,15 @@
 
 Секреты лежат в `config/.env`, остальные параметры — в `config/settings.json`. Оба файла нужны. Если какого-то нет, процесс завершается с ошибкой.
 
+Уведомления можно отправлять только в Discord, только в Telegram или в оба чата. Платформа включается своим токеном. Хотя бы один из `DISCORD_TOKEN` и `TELEGRAM_BOT_TOKEN` должен быть заполнен, иначе процесс завершается с ошибкой. Ключ Twitch по-прежнему нужен, чтобы узнавать о стримах.
+
 Примеры без секретов: `config/.env.example` и `config/settings.example.json`.
 
 `config/.env`:
 
 | Переменная | Назначение |
 | --- | --- |
-| `DISCORD_TOKEN` | Токен бота Discord |
+| `DISCORD_TOKEN` | Токен бота Discord. Пустое значение отключает Discord |
 | `DISCORD_CLIENT_ID` | Идентификатор приложения Discord |
 | `TWITCH_CLIENT_ID` | Идентификатор приложения Twitch |
 | `TWITCH_CLIENT_SECRET` | Секрет приложения Twitch |
