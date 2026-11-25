@@ -30,10 +30,10 @@ function tempTokenFile() {
 
 /**
  * @param {string} tokenFile
- * @param {(url: string, call: { url: string, method: string, body?: string, authorization: string|null }) => Response} handler
+ * @param {(url: string, call: { url: string, method: string, body?: string, authorization: string|null, contentType: string|null }) => Response} handler
  */
 function clientWith(tokenFile, handler) {
-    /** @type {{ url: string, method: string, body?: string, authorization: string|null }[]} */
+    /** @type {{ url: string, method: string, body?: string, authorization: string|null, contentType: string|null }[]} */
     const calls = [];
     /** @type {import('../twitch/TwitchClient').FetchLike} */
     const fetchImpl = async (url, options = {}) => {
@@ -42,7 +42,8 @@ function clientWith(tokenFile, handler) {
             url: String(url),
             method: options.method ?? 'GET',
             body: typeof options.body === 'string' ? options.body : undefined,
-            authorization: headers.get('authorization')
+            authorization: headers.get('authorization'),
+            contentType: headers.get('content-type')
         };
         calls.push(call);
         return handler(call.url, call);
@@ -591,6 +592,9 @@ describe('Twitch observation', function () {
             payload: { session: { id: 'sess-1', keepalive_timeout_seconds: 30 } }
         });
         await starting;
+        assert.equal(observer.started.length, 1);
+        assert.equal(observer.started[0][0].user_login, 'bob');
+        assert.equal(streamReads, 1);
 
         const shard = calls.find(call => call.url.includes('/conduits/shards'));
         const shardBody = JSON.parse(shard?.body ?? '{}');
@@ -599,6 +603,7 @@ describe('Twitch observation', function () {
 
         const subscriptions = calls.filter(call => call.url.includes('/subscriptions'));
         assert.equal(subscriptions.length, 3);
+        assert.equal(subscriptions.every(call => call.contentType === 'application/json'), true);
         const types = subscriptions.map(call => JSON.parse(call.body ?? '{}'));
         assert.deepEqual(types.map(body => body.transport), [
             { method: 'conduit', conduit_id: 'conduit-1' },
@@ -620,10 +625,10 @@ describe('Twitch observation', function () {
                 }
             }
         });
-        await waitFor(() => observer.started.length === 1);
+        await waitFor(() => streamReads === 2);
+        assert.equal(observer.started.length, 1);
         assert.equal(observer.started[0][0].title, 'Hello');
         assert.equal(observer.started[0][0].user_login, 'bob');
-        assert.equal(streamReads, 1);
 
         socket.receive({
             metadata: { message_type: 'notification', subscription_type: 'channel.update' },

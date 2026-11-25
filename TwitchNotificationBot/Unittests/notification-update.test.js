@@ -127,10 +127,12 @@ describe('NotificationService stream update', function () {
         await new Promise((resolve) => setTimeout(resolve, 30));
 
         assert.equal(discordCalls.length, 1);
-        const discordSend = /** @type {{ send: { files: Buffer[], embeds: { data: { image?: { url?: string }, title?: string } }[] } }} */ (discordCalls[0]).send;
+        const discordSend = /** @type {{ send: { files: Buffer[], embeds: { data: { image?: { url?: string }, title?: string, author?: { name?: string, url?: string, icon_url?: string } } }[] } }} */ (discordCalls[0]).send;
         assert.equal(discordSend.files.length, 1);
         assert.equal(discordSend.embeds[0].data.image?.url, 'attachment://preview.jpg');
         assert.equal(discordSend.embeds[0].data.title, 'Hello');
+        assert.equal(discordSend.embeds[0].data.author?.name, 'bot');
+        assert.equal(discordSend.embeds[0].data.author?.url, undefined);
         assert.ok(Buffer.isBuffer(telegramCalls[0] && /** @type {{ sendPhoto: { photo: Buffer } }} */ (telegramCalls[0]).sendPhoto.photo));
 
         service.onStreamUpdated([stream('Next', 'Just Chatting')]);

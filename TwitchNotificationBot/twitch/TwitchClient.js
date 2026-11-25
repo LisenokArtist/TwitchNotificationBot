@@ -214,7 +214,10 @@ class TwitchClient {
         const token = await this.#accessToken(false);
         const response = await this.#send('eventsub/subscriptions', {
             method: 'POST',
-            headers: this.#authHeaders(token),
+            headers: {
+                ...this.#authHeaders(token),
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 type,
                 version,

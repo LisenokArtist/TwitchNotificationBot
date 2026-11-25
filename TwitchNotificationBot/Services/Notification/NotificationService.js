@@ -391,7 +391,7 @@ class NotificationService extends ServiceBase {
     /**
      * https://discordjs.guide/popular-topics/embeds.html#using-the-embed-constructor
      * @param {StreamResponse} stream Стрим с твича
-     * @param {User|undefined} discordUser Если указано, добавляет ссылку на пользователя Discord
+     * @param {User|undefined} discordUser Если указано, показывает его имя и аватар в шапке сообщения
      * @param {any|undefined} twitchGame Если указано, добавляет название и обложку игры
      * @param {EmbedField[]|undefined} embedFields Если указано, добавляет строки на каждое поле
      * @param {string|undefined} imageUrl Адрес картинки внутри сообщения. Внешнюю ссылку Twitch не используем: она пропадает.
@@ -403,13 +403,8 @@ class NotificationService extends ServiceBase {
             ...stream.game_name && { description: stream.game_name },
             ...imageUrl && { image: { url: imageUrl } },
 
-            ...discordUser && {
-                author: {
-                    name: discordUser.displayName,
-                    icon_url: discordUser.avatarURL(),
-                    url: discordUser.tag
-                }
-            },
+            // tag вида «имя#1234» не является ссылкой. Discord принимает в author.url только http или https.
+            ...discordUser && { author: discordAuthor(discordUser) },
 
             ...twitchGame && { description: twitchGame.game_name },
             ...twitchGame && { thumbnail: { url: stream.thumbnail_url } },
@@ -819,6 +814,18 @@ const NotificationTypeProvider = {
     Started: 'add',
     Updated: 'update',
     Ended: 'remove'
+}
+
+/**
+ * Имя и аватар в шапке сообщения. Ссылка не ставится: tag пользователя не является http-адресом.
+ * @param {{ displayName?: string, username?: string, avatarURL?: () => string | null }} user
+ */
+function discordAuthor(user) {
+    const icon = typeof user.avatarURL === 'function' ? user.avatarURL() : null;
+    return {
+        name: user.displayName || user.username || 'Discord',
+        ...icon && { icon_url: icon }
+    };
 }
 
 module.exports = { NotificationService, NotificationRespond, NotificationRespondProvider, NotificationTypeProvider }

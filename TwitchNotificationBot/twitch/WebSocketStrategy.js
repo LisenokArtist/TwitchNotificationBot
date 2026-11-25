@@ -38,6 +38,7 @@ const MINUTE_MS = 60 * 1000;
  * Подписка с ключом приложения создаётся на conduit, а сокет становится его shard.
  * Прямой транспорт websocket Twitch открывает только пользовательским токеном, его здесь нет.
  * Смена названия или игры и долгая пауза без изменений дают одно и то же обновление.
+ * stream.online приходит только в момент старта эфира, поэтому уже идущие стримы читаются из Helix один раз после подписки.
  */
 class WebSocketStrategy extends ObservationStrategy {
     /**
@@ -125,6 +126,7 @@ class WebSocketStrategy extends ObservationStrategy {
         this.#running = true;
         try {
             await this.#open(this.#url, true);
+            await this.#syncLive();
             this.#startPreviewTimer();
         } catch (error) {
             await this.stop();
@@ -308,6 +310,106 @@ class WebSocketStrategy extends ObservationStrategy {
                 await this.#client.subscribeConduit(type, version, user.id, this.#conduitId);
             }
         }
+    }
+
+    /**
+     * Сообщает о стримах, которые уже идут. Подписка EventSub их сама не присылает.
+     * @returns {Promise<void>}
+     */
+    async #syncLive() {
+        if (!this.#running) {
+            return;
+        }
+
+        const logins = this.#users.map(user => user.login);
+        try {
+            const statuses = await this.#client.getStreamStatuses(logins);
+            if (!this.#running) {
+                return;
+            }
+
+            this.#applySnapshot(statuses);
+            const live = statuses.filter(status => status.isLive).length;
+            console.log(`В эфире сейчас ${live} из ${logins.length}`);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.log(`Текущие стримы не получены: ${message}`);
+        }
+    }
+
+    /**
+     * @param {import('./TwitchClient').StreamStatus[]} statuses
+     */
+    #applySnapshot(statuses) {
+        /** @type {StreamResponse[]} */
+        const started = [];
+        /** @type {StreamResponse[]} */
+        const updated = [];
+        /** @type {StreamResponse[]} */
+        const ended = [];
+        const seen = new Set();
+
+        for (const status of statuses) {
+            const key = status.login.toLowerCase();
+            seen.add(key);
+            const previous = this.#live.get(key);
+            if (status.isLive && status.stream) {
+                const changed = previous ? !sameStream(previous, status.stream) : false;
+                if (!previous) {
+                    this.#remember(key, status.stream);
+                    started.push(status.stream);
+                } else if (changed || this.#previewIsDue(key)) {
+                    this.#remember(key, status.stream);
+                    updated.push(status.stream);
+                }
+            } else if (previous) {
+                this.#forget(key);
+                ended.push(previous);
+            }
+        }
+
+        for (const [key, stream] of [...this.#live]) {
+            if (seen.has(key)) {
+                continue;
+            }
+
+            this.#forget(key);
+            ended.push(stream);
+        }
+
+        this.#emitStarted(started);
+        this.#emitUpdated(updated);
+        this.#emitEnded(ended);
+    }
+
+    /**
+     * @param {string} key
+     * @param {StreamResponse} stream
+     */
+    #remember(key, stream) {
+        this.#live.set(key, stream);
+        this.#shownAt.set(key, this.#now());
+    }
+
+    /**
+     * @param {string} key
+     */
+    #forget(key) {
+        this.#live.delete(key);
+        this.#shownAt.delete(key);
+    }
+
+    /**
+     * @param {string} key
+     * @returns {boolean}
+     */
+    #previewIsDue(key) {
+        const shownAt = this.#shownAt.get(key);
+        if (shownAt === undefined) {
+            return true;
+        }
+
+        return this.#now() - shownAt >= this.#previewRefreshMs;
     }
 
     /**
