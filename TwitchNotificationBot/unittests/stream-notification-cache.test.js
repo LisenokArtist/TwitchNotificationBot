@@ -23,6 +23,7 @@ describe('StreamNotificationCache', function () {
             discordMessageId: '555',
             telegramMessageId: 7,
             shownAt: 10,
+            announcement: 'Стрим начался!',
             discordClosed: false,
             telegramClosed: false,
             stream: /** @type {import('../domain/twitch/TwitchApiModels').StreamResponse} */ ({
@@ -41,6 +42,7 @@ describe('StreamNotificationCache', function () {
         assert.equal(stored[0].discordMessageId, '555');
         assert.equal(stored[0].telegramMessageId, 7);
         assert.equal(stored[0].shownAt, 10);
+        assert.equal(stored[0].announcement, 'Стрим начался!');
         assert.equal(loaded.observation()[0].stream.title, 'Hello');
 
         loaded.save('bob', { discordClosed: true, discordMessageId: null });

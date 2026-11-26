@@ -10,6 +10,7 @@ const path = require('node:path');
  * @property {boolean} discordClosed
  * @property {boolean} telegramClosed
  * @property {number} shownAt
+ * @property {string} announcement
  * @property {StreamResponse | null} stream
  */
 
@@ -20,6 +21,7 @@ const path = require('node:path');
  * @property {boolean} [discordClosed]
  * @property {boolean} [telegramClosed]
  * @property {number} [shownAt]
+ * @property {string} [announcement]
  * @property {StreamResponse} [stream]
  */
 
@@ -102,6 +104,7 @@ class StreamNotificationCache {
             discordClosed: false,
             telegramClosed: false,
             shownAt: Date.now(),
+            announcement: '',
             stream: null
         };
 
@@ -121,6 +124,9 @@ class StreamNotificationCache {
         }
         if (typeof patch.shownAt === 'number' && Number.isFinite(patch.shownAt)) {
             current.shownAt = patch.shownAt;
+        }
+        if (typeof patch.announcement === 'string') {
+            current.announcement = patch.announcement;
         }
         if (patch.stream) {
             current.stream = snapshot(patch.stream);
@@ -212,7 +218,7 @@ function parseRecord(value) {
         return null;
     }
 
-    const raw = /** @type {{ discordMessageId?: unknown, telegramMessageId?: unknown, discordClosed?: unknown, telegramClosed?: unknown, shownAt?: unknown, stream?: unknown }} */ (value);
+    const raw = /** @type {{ discordMessageId?: unknown, telegramMessageId?: unknown, discordClosed?: unknown, telegramClosed?: unknown, shownAt?: unknown, announcement?: unknown, stream?: unknown }} */ (value);
     const discordMessageId = typeof raw.discordMessageId === 'string' && raw.discordMessageId.length > 0
         ? raw.discordMessageId
         : null;
@@ -222,12 +228,13 @@ function parseRecord(value) {
     const discordClosed = raw.discordClosed === true;
     const telegramClosed = raw.telegramClosed === true;
     const shownAt = typeof raw.shownAt === 'number' && Number.isFinite(raw.shownAt) ? raw.shownAt : 0;
+    const announcement = typeof raw.announcement === 'string' ? raw.announcement : '';
     const stream = parseStream(raw.stream);
     if (discordMessageId === null && telegramMessageId === null && stream === null && !discordClosed && !telegramClosed) {
         return null;
     }
 
-    return { discordMessageId, telegramMessageId, discordClosed, telegramClosed, shownAt, stream };
+    return { discordMessageId, telegramMessageId, discordClosed, telegramClosed, shownAt, announcement, stream };
 }
 
 /**

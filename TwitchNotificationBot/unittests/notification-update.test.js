@@ -133,20 +133,24 @@ describe('NotificationService stream update', function () {
         assert.equal(discordSend.embeds[0].data.title, 'Hello');
         assert.equal(discordSend.embeds[0].data.author?.name, 'bot');
         assert.equal(discordSend.embeds[0].data.author?.url, undefined);
-        assert.ok(Buffer.isBuffer(telegramCalls[0] && /** @type {{ sendPhoto: { photo: Buffer } }} */ (telegramCalls[0]).sendPhoto.photo));
+        assert.equal(/** @type {{ content?: string }} */ (discordSend).content, 'Стрим начался!');
+        const telegramStart = /** @type {{ sendPhoto: { photo: Buffer, options: { caption?: string } } }} */ (telegramCalls[0]).sendPhoto;
+        assert.ok(Buffer.isBuffer(telegramStart.photo));
+        assert.match(telegramStart.options.caption ?? '', /Стрим начался!\nHello/);
 
+        service.messagesStartAnnouncement = ['Другой текст'];
         service.onStreamUpdated([stream('Next', 'Just Chatting')]);
         await new Promise((resolve) => setTimeout(resolve, 30));
 
         assert.equal(discordCalls.length, 2);
-        const discordEdit = /** @type {{ edit: { files: unknown[], embeds: { data: { title?: string, description?: string } }[] } }} */ (discordCalls[1]).edit;
+        const discordEdit = /** @type {{ edit: { content?: string, files: unknown[], embeds: { data: { title?: string, description?: string } }[] } }} */ (discordCalls[1]).edit;
+        assert.equal(discordEdit.content, 'Стрим начался!');
         assert.equal(discordEdit.embeds[0].data.title, 'Next');
         assert.equal(discordEdit.embeds[0].data.description, 'Just Chatting');
         assert.equal(discordEdit.files.length, 1);
         const telegramEdit = /** @type {{ editMessageMedia: { media: { caption?: string }, extra: { message_id?: number } } }} */ (telegramCalls[1]).editMessageMedia;
         assert.equal(telegramEdit.extra.message_id, 7);
-        assert.match(telegramEdit.media.caption ?? '', /Next/);
-        assert.match(telegramEdit.media.caption ?? '', /Just Chatting/);
+        assert.match(telegramEdit.media.caption ?? '', /Стрим начался!\nNext\nJust Chatting/);
     });
 
     it('restores sent messages after a restart and drops them when the stream ends', async function () {
@@ -179,6 +183,7 @@ describe('NotificationService stream update', function () {
         assert.equal(stored[0].discordMessageId, '555');
         assert.equal(stored[0].telegramMessageId, 7);
         assert.equal(stored[0].stream?.title, 'Hello');
+        assert.equal(stored[0].announcement, 'Стрим начался!');
 
         /** @type {string[]} */
         const fetched = [];
@@ -196,16 +201,19 @@ describe('NotificationService stream update', function () {
         await resumed.Start();
         discordCalls.length = 0;
         telegramCalls.length = 0;
+        resumed.messagesStartAnnouncement = ['Другой текст'];
         resumed.onStreamUpdated([stream('Next', 'Just Chatting')]);
         await wait();
 
         assert.deepEqual(fetched, ['555']);
         assert.equal(discordCalls.some(call => 'send' in call), false);
         assert.equal(telegramCalls.some(call => 'sendPhoto' in call), false);
-        const discordEdit = /** @type {{ edit: { embeds: { data: { title?: string } }[] } }} */ (discordCalls[0]).edit;
+        const discordEdit = /** @type {{ edit: { content?: string, embeds: { data: { title?: string } }[] } }} */ (discordCalls[0]).edit;
+        assert.equal(discordEdit.content, 'Стрим начался!');
         assert.equal(discordEdit.embeds[0].data.title, 'Next');
-        const telegramEdit = /** @type {{ editMessageMedia: { extra: { message_id?: number } } }} */ (telegramCalls[0]).editMessageMedia;
+        const telegramEdit = /** @type {{ editMessageMedia: { media: { caption?: string }, extra: { message_id?: number } } }} */ (telegramCalls[0]).editMessageMedia;
         assert.equal(telegramEdit.extra.message_id, 7);
+        assert.match(telegramEdit.media.caption ?? '', /Стрим начался!\nNext/);
 
         resumed.onStreamEnded([stream('Next', 'Just Chatting')]);
         await wait();

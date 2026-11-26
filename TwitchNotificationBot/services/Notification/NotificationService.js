@@ -20,6 +20,7 @@ const path = require('node:path');
  * @property {number | null} telegramMessageId
  * @property {boolean} discordClosed
  * @property {boolean} telegramClosed
+ * @property {string} announcement
  */
 
 /** @typedef {import('./StreamNotificationCache').StreamNotificationCache} StreamNotificationCache */
@@ -320,6 +321,7 @@ class NotificationService extends ServiceBase {
                 switch (arg.type) {
                     case NotificationTypeProvider.Started:
                     case NotificationTypeProvider.Updated: {
+                        const announcement = this.#startAnnouncement(arg.stream);
                         const preview = await this.#loadPreview(arg.stream);
                         const file = new AttachmentBuilder(preview, { name: 'preview.jpg' });
                         const embed = this.#buildEmbedMessage(
@@ -335,7 +337,7 @@ class NotificationService extends ServiceBase {
                             : null;
                         if (arg.type === NotificationTypeProvider.Started && !existing) {
                             const message = await channel.send({
-                                content: arg.type,
+                                content: announcement,
                                 embeds: [embed],
                                 files: [file]
                             });
@@ -348,6 +350,7 @@ class NotificationService extends ServiceBase {
                         }
 
                         const edited = await existing.edit({
+                            content: announcement,
                             embeds: [embed],
                             files: [file],
                             attachments: []
@@ -362,7 +365,7 @@ class NotificationService extends ServiceBase {
                         }
 
                         await channel.send({
-                            content: arg.type,
+                            content: this.#pickAnnouncementText(NotificationTypeProvider.Ended) ?? '',
                             embeds: [this.#buildEmbedMessage(arg.stream)]
                         });
                         this.#finish(arg.stream, 'discord');
@@ -432,7 +435,7 @@ class NotificationService extends ServiceBase {
                     case NotificationTypeProvider.Started:
                     case NotificationTypeProvider.Updated: {
                         const preview = await this.#loadPreview(arg.stream);
-                        const caption = this.#streamCaption(arg.type, arg.stream);
+                        const caption = this.#streamCaption(arg.stream);
                         const options = this.#buildTelegramOptions(arg.type, arg.stream, caption);
                         const sent = this.#sent.get(streamKey(arg.stream)) ?? null;
                         const messageId = sent && !sent.telegramClosed ? sent.telegramMessageId : null;
@@ -554,6 +557,7 @@ class NotificationService extends ServiceBase {
             telegramMessageId: next.telegramMessageId,
             discordClosed: next.discordClosed,
             telegramClosed: next.telegramClosed,
+            ...next.announcement.length > 0 && { announcement: next.announcement },
             stream,
             shownAt: Date.now()
         });
@@ -628,7 +632,8 @@ class NotificationService extends ServiceBase {
                 discordMessageId: record.discordMessageId,
                 telegramMessageId: record.telegramMessageId,
                 discordClosed: record.discordClosed,
-                telegramClosed: record.telegramClosed
+                telegramClosed: record.telegramClosed,
+                announcement: record.announcement
             });
         }
     }
@@ -661,12 +666,37 @@ class NotificationService extends ServiceBase {
     }
 
     /**
-     * @param {NotificationTypeProvider} type
+     * Один раз выбирает текст начала и держит его до конца стрима.
+     * Повторный выбор на обновлении заменил бы анонс другим случайным сообщением.
      * @param {StreamResponse} stream
      * @returns {string}
      */
-    #streamCaption(type, stream) {
-        const announcement = this.#pickAnnouncementText(type) ?? '';
+    #startAnnouncement(stream) {
+        const key = streamKey(stream);
+        const current = this.#sent.get(key);
+        if (current && current.announcement.length > 0) {
+            return current.announcement;
+        }
+
+        const text = this.#pickAnnouncementText(NotificationTypeProvider.Started) ?? '';
+        if (text.length === 0) {
+            return '';
+        }
+
+        const next = { ...(current ?? emptySent()), announcement: text };
+        this.#sent.set(key, next);
+        if (current && (current.discordMessageId || current.telegramMessageId || current.discord)) {
+            this.#notifications?.save(key, { announcement: text });
+        }
+        return text;
+    }
+
+    /**
+     * @param {StreamResponse} stream
+     * @returns {string}
+     */
+    #streamCaption(stream) {
+        const announcement = this.#startAnnouncement(stream);
         const lines = [];
         if (announcement.length > 0) {
             lines.push(escapeHtml(announcement));
@@ -732,7 +762,8 @@ function emptySent() {
         discordMessageId: null,
         telegramMessageId: null,
         discordClosed: false,
-        telegramClosed: false
+        telegramClosed: false,
+        announcement: ''
     };
 }
 
