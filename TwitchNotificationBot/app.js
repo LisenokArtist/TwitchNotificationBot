@@ -1,3 +1,6 @@
+const { installLogTimestamps } = require('./logTime');
+installLogTimestamps();
+
 const { TwitchNotificationBot } = require("./TwitchNotificationBot");
 const { AppConfig } = require("./config/AppConfig");
 
